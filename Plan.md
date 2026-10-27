@@ -12,7 +12,7 @@
 - [x] Architektur festgelegt
 - [x] Meilensteine definiert
 - [x] M0 – Projekt-Setup (lokal; offen: GitHub-Repo anlegen, WSL2)
-- [ ] **Nächster Schritt:** M1 – Protokoll-Library + CLI
+- [ ] **In Arbeit:** M1 – Library + CLI fertig (20 Tests grün), Hardware-Verifikation steht aus
 
 ---
 
@@ -104,10 +104,11 @@ spider-farmer-hass/
 - [ ] WSL2: **noch nicht installiert** (`wsl --install` als Admin + Neustart), danach HA-Core-venv, `custom_components` per Symlink auf das Repo. Wird erst für M2 gebraucht.
 
 ### M1 – Protokoll-Library + CLI (Windows)
-- [ ] `crypto.py` + Tests mit bekannten Samples
-- [ ] `rest.py`: Login (OTP), Rooms, Devices, Socket-Namen, Historie
-- [ ] `mqtt.py`: Verbinden, `getDevSta`/`getSysSta`/`getConfigFile`, `setConfigField`
-- [ ] CLI zum Testen gegen deine Hardware
+- [x] `crypto.py` (+ `exceptions.py`, `models.py`) mit Tests
+- [x] `rest.py`: Login (OTP), Region, Rooms, Devices (über alle Räume), Socket-Namen, Historie, `call_raw` für beliebige Endpunkte
+- [x] `mqtt.py`: eine Verbindung für alle Geräte, Auto-Reconnect, eindeutige Client-ID, State-Cache, `request`/`query` (wartet auf Antwort), `set_component` (Merge in komplette Sub-Config)
+- [x] CLI `scripts/sf_cli.py`: `login`, `devices [--raw]`, `status`, `watch`, `set`, `history`, `call` (Session in `sf.session.json`, git-ignored)
+- [ ] Offene TODOs im Code klären: Fehlercodes bei ungültigem Token (`AUTH_ERROR_CODES`), Room-ID-Key in `getUserRooms`, Verschachtelung von `getConfigFile` (`device`-Ebene?)
 - [ ] **Hardware-Verifikation:**
   - [ ] Light- und Outlet-Steuerung (Payload-Form)
   - [ ] Level-Bereiche Blower/Fan/Light
