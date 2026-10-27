@@ -151,7 +151,9 @@ spider-farmer-hass/
 - [x] Coordinator mit MQTT-Push + Fallback-Poll (60 s, nur wenn Pushes ausbleiben), Online = Nachricht in den letzten 120 s
 - [x] Device Registry (Serial, Modell, Firmware, HW-Version)
 - [x] `sensor` (Temp, Feuchte, VPD, PPFD, CO2, Boden-Temp/-Feuchte/-EC – nur was das Gerät meldet), `binary_sensor` (Online), Diagnose (WLAN, Laufzeit)
-- [ ] End-to-End-Test in HA (WSL)
+- [x] End-to-End-Test in HA (WSL): Einrichtung per Code, 10 Entities, Push alle ~6 s
+- [ ] Koexistenz-Test: App neu einloggen → HA läuft weiter?
+- WSL-Hinweis: `build-essential` nötig (`sudo apt update && sudo apt install -y build-essential`), sonst bleibt das Frontend wegen `pymicro-vad` bei „Wird geladen“ hängen
 - [ ] HA-Tests mit `pytest-homeassistant-custom-component` (in WSL)
 - [ ] Mehrere Bodensensoren (`sensors[]` mit IDs wie `AA01`) als eigene Entities
 - [x] Übersetzungen de/en
