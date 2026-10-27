@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from unittest.mock import patch
+
 from homeassistant.config_entries import ConfigEntryState
 from homeassistant.core import HomeAssistant
 from pytest_homeassistant_custom_component.common import MockConfigEntry
@@ -121,3 +123,39 @@ async def test_unload(
     await _setup(hass, config_entry)
     assert await hass.config_entries.async_unload(config_entry.entry_id)
     assert config_entry.state is ConfigEntryState.NOT_LOADED
+
+
+async def test_soil_probes_only_with_multiple_probes(
+    hass: HomeAssistant, config_entry: MockConfigEntry, broker: list[FakeBroker]
+) -> None:
+    from .conftest import DEV_STA
+
+    probes = [
+        {"id": "avg", "tempSoil": 20.5, "humiSoil": 50, "ECSoil": 1.0},
+        {"id": "AA01", "type": 2, "tempSoil": 20.2, "humiSoil": 52.1, "ECSoil": 0.96},
+        {"id": "AA02", "type": 2, "tempSoil": 20.8, "humiSoil": 47.9, "ECSoil": 1.04},
+    ]
+    with patch.dict(DEV_STA, {"sensors": probes}):
+        await _setup(hass, config_entry)
+
+    assert hass.states.get("sensor.tent_soil_moisture_aa02").state == "47.9"
+    assert hass.states.get("sensor.tent_soil_ec_aa01").state == "0.96"
+
+
+async def test_diagnostics_are_redacted(
+    hass: HomeAssistant, config_entry: MockConfigEntry, broker: list[FakeBroker]
+) -> None:
+    from custom_components.spider_farmer.diagnostics import (
+        async_get_config_entry_diagnostics,
+    )
+
+    from .conftest import EMAIL, SERIAL
+
+    await _setup(hass, config_entry)
+    result = await async_get_config_entry_diagnostics(hass, config_entry)
+
+    text = str(result)
+    assert SERIAL not in text
+    assert EMAIL not in text
+    assert "secret" not in text
+    assert result["devices"]["device_1"]["state"]["dev"]["sensor"]["temp"] == 21.1

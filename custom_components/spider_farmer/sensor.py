@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import dataclasses
 from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Any
@@ -154,7 +155,33 @@ async def async_setup_entry(
             for description in SENSORS
             if description.climate_key is None or description.climate_key in reported
         )
+        # Individual soil probes; with a single probe they equal the averages above.
+        probes = soil_probes(state)
+        if len(probes) > 1:
+            entities.extend(
+                SpiderFarmerProbeSensor(coordinator, serial, probe_id, description)
+                for probe_id, values in probes.items()
+                for description in PROBE_SENSORS
+                if description.climate_key in values
+            )
     async_add_entities(entities)
+
+
+def soil_probes(state: DeviceState) -> dict[str, dict[str, Any]]:
+    """Soil probes from getDevSta `sensors[]` by id (e.g. "AA01"), without the average."""
+    return {
+        str(entry["id"]): entry
+        for entry in (state.dev or {}).get("sensors") or []
+        if isinstance(entry, dict) and entry.get("id") not in (None, "avg")
+    }
+
+
+# Per-probe variants of the soil sensors.
+PROBE_SENSORS = tuple(
+    dataclasses.replace(description, translation_key=f"probe_{description.key}")
+    for description in SENSORS
+    if description.key in ("soil_temperature", "soil_moisture", "soil_ec")
+)
 
 
 class SpiderFarmerSensor(SpiderFarmerEntity, SensorEntity):
@@ -172,3 +199,26 @@ class SpiderFarmerSensor(SpiderFarmerEntity, SensorEntity):
     @property
     def native_value(self) -> Any:
         return self.entity_description.value_fn(self.device_state)
+
+
+class SpiderFarmerProbeSensor(SpiderFarmerEntity, SensorEntity):
+    """One value of one soil probe."""
+
+    entity_description: SpiderFarmerSensorDescription
+
+    def __init__(
+        self,
+        coordinator: SpiderFarmerCoordinator,
+        serial: str,
+        probe_id: str,
+        description: SpiderFarmerSensorDescription,
+    ) -> None:
+        super().__init__(coordinator, serial, f"probe_{probe_id.lower()}_{description.key}")
+        self.entity_description = description
+        self._probe_id = probe_id
+        self._attr_translation_placeholders = {"probe": probe_id}
+
+    @property
+    def native_value(self) -> Any:
+        probe = soil_probes(self.device_state).get(self._probe_id) or {}
+        return probe.get(self.entity_description.climate_key)

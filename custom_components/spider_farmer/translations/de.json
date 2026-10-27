@@ -52,6 +52,15 @@
       },
       "uptime": {
         "name": "Laufzeit"
+      },
+      "probe_soil_temperature": {
+        "name": "Bodentemperatur {probe}"
+      },
+      "probe_soil_moisture": {
+        "name": "Bodenfeuchte {probe}"
+      },
+      "probe_soil_ec": {
+        "name": "Boden-EC {probe}"
       }
     },
     "switch": {
