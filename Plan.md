@@ -13,7 +13,8 @@
 - [x] Meilensteine definiert
 - [x] M0 – Projekt-Setup (lokal; offen: GitHub-Repo anlegen, WSL2)
 - [x] M1 – Library + CLI, Hardware-Verifikation (Lesen, Steuern, Push, Koexistenz mit App)
-- [ ] **In Arbeit:** M2 – Code fertig, End-to-End-Test in HA läuft
+- [x] M2 – Lesen in HA, End-to-End getestet, Koexistenz mit App bestätigt
+- [ ] **Nächster Schritt:** M3 – Steuerung
 
 ---
 
@@ -152,7 +153,7 @@ spider-farmer-hass/
 - [x] Device Registry (Serial, Modell, Firmware, HW-Version)
 - [x] `sensor` (Temp, Feuchte, VPD, PPFD, CO2, Boden-Temp/-Feuchte/-EC – nur was das Gerät meldet), `binary_sensor` (Online), Diagnose (WLAN, Laufzeit)
 - [x] End-to-End-Test in HA (WSL): Einrichtung per Code, 10 Entities, Push alle ~6 s
-- [ ] Koexistenz-Test: App neu einloggen → HA läuft weiter?
+- [x] Koexistenz-Test: App neu eingeloggt → HA läuft unverändert weiter (D11 bestätigt)
 - WSL-Hinweis: `build-essential` nötig (`sudo apt update && sudo apt install -y build-essential`), sonst bleibt das Frontend wegen `pymicro-vad` bei „Wird geladen“ hängen
 - [ ] HA-Tests mit `pytest-homeassistant-custom-component` (in WSL)
 - [ ] Mehrere Bodensensoren (`sensors[]` mit IDs wie `AA01`) als eigene Entities
