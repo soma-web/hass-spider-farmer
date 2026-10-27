@@ -14,7 +14,9 @@
 - [x] M0 – Projekt-Setup (lokal; offen: GitHub-Repo anlegen, WSL2)
 - [x] M1 – Library + CLI, Hardware-Verifikation (Lesen, Steuern, Push, Koexistenz mit App)
 - [x] M2 – Lesen in HA, End-to-End getestet, Koexistenz mit App bestätigt
-- [ ] **Nächster Schritt:** M3 – Steuerung
+- [x] M3 – Steuerung (Code + HA-Tests; Praxistest in der HA-Oberfläche offen)
+- [x] M4 – Historie-Import (Code + Tests; Live-Import passiert beim nächsten HA-Login)
+- [ ] **M5 – Release:** Code fertig; offen: GitHub-Repo anlegen + Push, Lizenz wählen, Release v0.1.0
 
 ---
 
@@ -155,23 +157,32 @@ spider-farmer-hass/
 - [x] End-to-End-Test in HA (WSL): Einrichtung per Code, 10 Entities, Push alle ~6 s
 - [x] Koexistenz-Test: App neu eingeloggt → HA läuft unverändert weiter (D11 bestätigt)
 - WSL-Hinweis: `build-essential` nötig (`sudo apt update && sudo apt install -y build-essential`), sonst bleibt das Frontend wegen `pymicro-vad` bei „Wird geladen“ hängen
-- [ ] HA-Tests mit `pytest-homeassistant-custom-component` (in WSL)
-- [ ] Mehrere Bodensensoren (`sensors[]` mit IDs wie `AA01`) als eigene Entities
+- [x] HA-Tests mit `pytest-homeassistant-custom-component` (`tests_ha/`, venv `~/ha-test` in WSL; auch in CI)
+- [x] Mehrere Bodensensoren (`sensors[]` mit IDs wie `AA01`) als eigene Entities – erst ab 2 Fühlern (sonst identisch mit Durchschnitt)
 - [x] Übersetzungen de/en
 
 ### M3 – Steuerung
-- [ ] Config-Cache (`getConfigFile`) + Merge für `setConfigField`
-- [ ] `switch` (O1–O5), `light`, `fan` (Abluft Prozent, Umluft Stufen)
-- [ ] Zustand nach Befehl über `getDevSta` bestätigen
+- [x] Vor jedem Befehl `getConfigFile` frisch lesen + Merge für `setConfigField` (verhindert, dass App-Änderungen überschrieben werden); Config-Refresh alle 5 Min.
+- [x] `switch` (O1–O5), `light` (Helligkeit 1–100), `fan` (Abluft 1–100 %, Umluft 10 Stufen + Oszillation an/aus), `number` (Oszillation 0–10); Attribut `mode_type` zeigt den Controller-Modus
+- [x] Zustand nach Befehl über Push von `getDevSta`
+- [x] Oszillation: `shakeLevel` wird übernommen (Hardware-Test, `getConfigFile` zeigt 3); ob die Umluft dann pendelt, bestätigt der Nutzer noch – danach zurück auf 0
+- [ ] Praxistest in der HA-Oberfläche: Steckdose 3, Umluft-Stufe, Oszillation
+- [ ] Lampe in der Lichtphase testen (Nutzer möchte sie in der Dunkelphase nicht schalten)
+- [ ] Offen: Verhalten bei Zeitplan-/Zyklus-Modus (`modeType` ≠ 0) – überschreibt der Controller manuelle Befehle?
 
 ### M4 – Historie
-- [ ] Import `getDeviceTHPData` als Statistik beim Einrichten
+- [x] Import `getDeviceTHPData` (bis 30 Tage, tageweise, stoppt beim ersten leeren Tag) → stündlich Mittel/Min/Max als importierte Statistik für die Stunden vor der Einrichtung
+- [x] Läuft direkt nach dem Login (Token frisch); bei `102` wird übersprungen und beim nächsten Start/Reauth erneut versucht
+- [ ] Live-Test (braucht neuen HA-Login → App wird dabei wieder abgemeldet)
 - [ ] Optional: Lücken nach Ausfall nachladen
 
 ### M5 – Release
-- [ ] `diagnostics.py` (Token/Passwort geschwärzt)
-- [ ] README (Installation über HACS, Einrichtung, Hinweis „inoffiziell“)
-- [ ] GitHub Actions: hassfest, HACS-Validierung, pytest
+- [x] `diagnostics.py` (Token, Passwort, E-Mail, Seriennummer, IDs geschwärzt; per Test geprüft)
+- [x] README (Features, HACS-Installation, Einrichtung, Warnung App-Abmeldung, Ko-fi, Entwicklung)
+- [x] GitHub Actions: hassfest, HACS-Validierung, ruff, pytest (Library + HA-Tests, Python 3.14)
+- [x] Repo auf persönliche Daten geprüft (Seriennummer, User-ID, E-Mail) – sauber, auch in der Historie
+- [ ] GitHub-Repo `somesoma/spider-farmer-hass` anlegen, pushen, CI grün
+- [ ] Lizenz festlegen (`LICENSE`)
 - [ ] Release v0.1.0
 
 ### Später
@@ -181,7 +192,7 @@ spider-farmer-hass/
 
 ## 5. Risiken
 
-- **Light/Outlet-Payload unbestätigt:** wird in M1 an der Hardware geklärt
+- **Light-Payload unbestätigt:** Outlet bestätigt; Lampe noch nicht geschaltet (Dunkelphase)
 - **Session-Konflikt mit der App (bestätigt, entschärft):** Login in HA wirft die App raus und umgekehrt; MQTT bleibt aber gültig → siehe D11. Offen: Ändert sich `mqttPwd` irgendwann (z. B. bei Passwort-/Konto-Änderung)?
 - **Inoffizielle API:** Spider Farmer kann sie jederzeit ändern (App-Version im `systemdata`-Header)
 - **Self-signed MQTT-Zertifikat:** TLS ohne Prüfung nötig, im README dokumentieren
