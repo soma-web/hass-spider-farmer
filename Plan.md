@@ -66,6 +66,18 @@
   - `modeType` z. B. Licht 1 (Zeitplan), Steckdose O1 3 (Zyklus), viele 0 (manuell?)
 - ✅ Historie `getDeviceTHPData`: Zeitbereich und `addTime` in **UTC**, Werte als Strings, 5-Min-Raster
 - Antworten enthalten `pcode`, `UTC`, `code: 200`
+- ✅ **Steuerung bestätigt:**
+  - Umluft: `keyPath ["device","fan"]`, `mLevel` 2 → 3 → 2
+  - Steckdose: `keyPath ["outlet","O3"]`, Params `{"O3": {…komplett…, "mOnOff": 1}}`, an → aus
+  - Das Gerät bestätigt mit `{"method":"setConfigField","msgId":<gleich>,"code":200,"msg":"ok"}`
+  - Danach **pusht** es von selbst `getDevSta` (ohne `msgId`) und `getSysSta` → Zustand ist sofort aktuell
+  - Lampe absichtlich nicht getestet (Dunkelphase), Form ist aber dieselbe (`["device","light"]`, `mOnOff`/`mLevel`)
+- ⚠️ **Login aus HA/CLI meldet die Handy-App ab** (ein Token pro Konto). Folgen:
+  - Im README deutlich warnen; Empfehlung: **zweites Spider-Farmer-Konto** für HA anlegen und das Gerät damit teilen (falls die App Teilen unterstützt – prüfen)
+  - Umgekehrt meldet ein neuer App-Login vermutlich HA ab → Reauth-Flow muss sauber funktionieren
+  - Noch zu prüfen: Wird nur der REST-Token ungültig, oder auch die MQTT-Verbindung?
+- `getConfigFile` enthält außerdem `system` (buzzer, 24h), `alarm` (Min/Max-Grenzen je Sensor), `calibration`
+- Umluft-Config: `maxSpeed: 1`, aber `mLevel` 2–3 funktioniert → Stufenbereich noch unklar (App zeigt vermutlich 1–10)
 
 ## 2. Entscheidungen
 
@@ -123,9 +135,9 @@ spider-farmer-hass/
 - [x] Room-ID-Key (`id`) und Verschachtelung von `getConfigFile` (`configFile.device/outlet/target`) geklärt → Library auf beliebige `keyPath`s umgestellt (`set_config`)
 - [ ] Fehlercodes bei ungültigem Token (`AUTH_ERROR_CODES`) – erst sichtbar, wenn ein Token abläuft
 - [ ] **Hardware-Verifikation:**
-  - [ ] Light- und Outlet-Steuerung (Payload-Form)
+  - [x] Outlet-Steuerung bestätigt (O3), Light gleiche Form (nicht geschaltet)
   - [ ] Level-Bereiche Blower/Fan/Light
-  - [ ] Parallel-Betrieb mit der App: wird die App-Session durch HA-Login ungültig? MQTT-Client-ID-Konflikte?
+  - [x] Parallel-Betrieb mit der App: **App wird beim Login abgemeldet** (siehe Erkenntnisse)
   - [ ] Pusht das Gerät von selbst, oder muss `getDevSta` gepollt werden?
   - [x] Region EU: `api.spider-farmer.com` funktioniert
 
@@ -159,6 +171,6 @@ spider-farmer-hass/
 ## 5. Risiken
 
 - **Light/Outlet-Payload unbestätigt:** wird in M1 an der Hardware geklärt
-- **Session-Konflikt mit der App:** möglicherweise wirft ein Login in HA die App raus (oder umgekehrt); wird in M1 getestet
+- **Session-Konflikt mit der App (bestätigt):** Login in HA wirft die App raus und vermutlich umgekehrt → Zweitkonto empfehlen, Reauth robust machen
 - **Inoffizielle API:** Spider Farmer kann sie jederzeit ändern (App-Version im `systemdata`-Header)
 - **Self-signed MQTT-Zertifikat:** TLS ohne Prüfung nötig, im README dokumentieren
