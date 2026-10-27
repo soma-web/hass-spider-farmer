@@ -8,6 +8,12 @@ Spider Farmer cloud (REST API + MQTT).
 
 *Not affiliated with or endorsed by Spider Farmer.*
 
+## Support
+
+If you find this integration useful, you can support its development:
+
+[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/A4Y829KJC5)
+
 ## Development
 
 ```powershell
