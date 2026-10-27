@@ -15,3 +15,7 @@ POLL_INTERVAL_SECONDS = 60
 OFFLINE_AFTER_SECONDS = 120
 # How long setup waits for the first status from the cloud.
 FIRST_DATA_TIMEOUT_SECONDS = 30
+# Wait for the device to answer a config read before sending a command.
+COMMAND_TIMEOUT_SECONDS = 10
+# Re-read the device config (modes, oscillation, …) so app changes show up.
+CONFIG_REFRESH_SECONDS = 300

@@ -30,7 +30,7 @@ import aiohttp
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "custom_components" / "spider_farmer"))
 
-from sfcloud import Device, SpiderFarmerApi, SpiderFarmerMqtt
+from sfcloud import AuthError, Device, SpiderFarmerApi, SpiderFarmerMqtt
 
 SESSION_FILE = Path("sf.session.json")
 
@@ -74,7 +74,17 @@ async def cmd_login(api: SpiderFarmerApi, args: argparse.Namespace) -> None:
 
 
 async def load_devices(api: SpiderFarmerApi, session: dict[str, Any]) -> list[Device]:
-    return await api.get_all_devices(session["user_id"])
+    """Devices via REST; falls back to the cached list when the token was replaced."""
+    try:
+        devices = await api.get_all_devices(session["user_id"])
+    except AuthError:
+        if "devices" not in session:
+            raise
+        print("(REST token replaced by another login – using cached device list)")
+        return [Device.from_api(raw) for raw in session["devices"]]
+    session["devices"] = [d.raw for d in devices]
+    SESSION_FILE.write_text(json.dumps(session, indent=2), encoding="utf-8")
+    return devices
 
 
 async def cmd_devices(api: SpiderFarmerApi, args: argparse.Namespace) -> None:

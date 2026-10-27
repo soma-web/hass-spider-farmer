@@ -2,12 +2,15 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import DOMAIN, MANUFACTURER
 from .coordinator import SpiderFarmerCoordinator
 from .sfcloud import DeviceState
+from .sfcloud.mqtt import config_at
 
 
 class SpiderFarmerEntity(CoordinatorEntity[SpiderFarmerCoordinator]):
@@ -39,3 +42,17 @@ class SpiderFarmerEntity(CoordinatorEntity[SpiderFarmerCoordinator]):
     @property
     def available(self) -> bool:
         return super().available and self.coordinator.is_online(self._serial)
+
+    def live(self, *path: str) -> dict[str, Any]:
+        """Live status (getDevSta) at `path`, e.g. live("outlet", "O1")."""
+        node: Any = self.device_state.dev or {}
+        for key in path:
+            node = node.get(key) if isinstance(node, dict) else None
+        return node if isinstance(node, dict) else {}
+
+    def config(self, *path: str) -> dict[str, Any]:
+        """Stored configuration (getConfigFile) at `path`, e.g. config("device", "fan")."""
+        return config_at(self.device_state.config, list(path))
+
+    async def async_set_config(self, key_path: list[str], patch: dict[str, Any]) -> None:
+        await self.coordinator.async_set_config(self._serial, key_path, patch)

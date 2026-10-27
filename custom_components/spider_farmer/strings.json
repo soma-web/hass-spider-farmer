@@ -35,12 +35,52 @@
   },
   "entity": {
     "sensor": {
-      "vpd": { "name": "VPD" },
-      "ppfd": { "name": "PPFD" },
-      "soil_temperature": { "name": "Soil temperature" },
-      "soil_moisture": { "name": "Soil moisture" },
-      "soil_ec": { "name": "Soil EC" },
-      "uptime": { "name": "Uptime" }
+      "vpd": {
+        "name": "VPD"
+      },
+      "ppfd": {
+        "name": "PPFD"
+      },
+      "soil_temperature": {
+        "name": "Soil temperature"
+      },
+      "soil_moisture": {
+        "name": "Soil moisture"
+      },
+      "soil_ec": {
+        "name": "Soil EC"
+      },
+      "uptime": {
+        "name": "Uptime"
+      }
+    },
+    "switch": {
+      "outlet": {
+        "name": "Outlet {number}"
+      }
+    },
+    "fan": {
+      "blower": {
+        "name": "Exhaust fan"
+      },
+      "fan": {
+        "name": "Circulation fan"
+      }
+    },
+    "light": {
+      "light": {
+        "name": "Light"
+      }
+    },
+    "number": {
+      "oscillation": {
+        "name": "Oscillation"
+      }
+    }
+  },
+  "exceptions": {
+    "command_failed": {
+      "message": "Could not send the command to the Spider Farmer controller. Check that it is online."
     }
   }
 }

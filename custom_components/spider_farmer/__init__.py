@@ -7,7 +7,14 @@ from homeassistant.core import HomeAssistant
 
 from .coordinator import SpiderFarmerConfigEntry, SpiderFarmerCoordinator
 
-PLATFORMS: list[Platform] = [Platform.BINARY_SENSOR, Platform.SENSOR]
+PLATFORMS: list[Platform] = [
+    Platform.BINARY_SENSOR,
+    Platform.FAN,
+    Platform.LIGHT,
+    Platform.NUMBER,
+    Platform.SENSOR,
+    Platform.SWITCH,
+]
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: SpiderFarmerConfigEntry) -> bool:

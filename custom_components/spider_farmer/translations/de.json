@@ -35,12 +35,52 @@
   },
   "entity": {
     "sensor": {
-      "vpd": { "name": "VPD" },
-      "ppfd": { "name": "PPFD" },
-      "soil_temperature": { "name": "Bodentemperatur" },
-      "soil_moisture": { "name": "Bodenfeuchte" },
-      "soil_ec": { "name": "Boden-EC" },
-      "uptime": { "name": "Laufzeit" }
+      "vpd": {
+        "name": "VPD"
+      },
+      "ppfd": {
+        "name": "PPFD"
+      },
+      "soil_temperature": {
+        "name": "Bodentemperatur"
+      },
+      "soil_moisture": {
+        "name": "Bodenfeuchte"
+      },
+      "soil_ec": {
+        "name": "Boden-EC"
+      },
+      "uptime": {
+        "name": "Laufzeit"
+      }
+    },
+    "switch": {
+      "outlet": {
+        "name": "Steckdose {number}"
+      }
+    },
+    "fan": {
+      "blower": {
+        "name": "Abluft"
+      },
+      "fan": {
+        "name": "Umluft"
+      }
+    },
+    "light": {
+      "light": {
+        "name": "Lampe"
+      }
+    },
+    "number": {
+      "oscillation": {
+        "name": "Oszillation"
+      }
+    }
+  },
+  "exceptions": {
+    "command_failed": {
+      "message": "Der Befehl konnte nicht an den Spider-Farmer-Controller gesendet werden. Prüfe, ob er online ist."
     }
   }
 }

@@ -10,20 +10,22 @@ from typing import Any
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant, callback
-from homeassistant.exceptions import ConfigEntryNotReady
+from homeassistant.exceptions import ConfigEntryNotReady, HomeAssistantError
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
 from .const import (
+    COMMAND_TIMEOUT_SECONDS,
     CONF_DEVICES,
     CONF_MQTT_PASSWORD,
     CONF_MQTT_USERNAME,
     CONF_USER_ID,
+    CONFIG_REFRESH_SECONDS,
     DOMAIN,
     FIRST_DATA_TIMEOUT_SECONDS,
     OFFLINE_AFTER_SECONDS,
     POLL_INTERVAL_SECONDS,
 )
-from .sfcloud import AuthError, Device, DeviceState, SpiderFarmerMqtt
+from .sfcloud import AuthError, CannotConnect, Device, DeviceState, SpiderFarmerMqtt
 from .sfcloud.mqtt import GET_CONFIG_FILE, GET_DEV_STA, GET_SYS_STA
 
 _LOGGER = logging.getLogger(__name__)
@@ -65,6 +67,7 @@ class SpiderFarmerCoordinator(DataUpdateCoordinator[dict[str, DeviceState]]):
             on_connection_change=self._on_connection_change,
         )
         self._last_seen: dict[str, float] = {}
+        self._config_requested: dict[str, float] = {s: time.monotonic() for s in self.devices}
         self._first_data = asyncio.Event()
 
     async def async_start(self) -> None:
@@ -97,7 +100,13 @@ class SpiderFarmerCoordinator(DataUpdateCoordinator[dict[str, DeviceState]]):
             if serial is None:
                 _LOGGER.debug("Account message: %s", msg)
             return
-        self._last_seen[serial] = time.monotonic()
+        now = time.monotonic()
+        self._last_seen[serial] = now
+        if now - self._config_requested.get(serial, now) > CONFIG_REFRESH_SECONDS:
+            self._config_requested[serial] = now
+            self.config_entry.async_create_background_task(
+                self.hass, self.mqtt.request(serial, GET_CONFIG_FILE), f"{DOMAIN}_config_refresh"
+            )
         if all(self.mqtt.states[s].dev is not None for s in self.devices):
             self._first_data.set()
         if self._first_data.is_set():
@@ -107,9 +116,27 @@ class SpiderFarmerCoordinator(DataUpdateCoordinator[dict[str, DeviceState]]):
         if not self.mqtt.connected:
             raise UpdateFailed("Not connected to the Spider Farmer cloud")
         for serial in self.devices:
-            await self.mqtt.request(serial, GET_DEV_STA)
-            await self.mqtt.request(serial, GET_SYS_STA)
+            for method in _STATE_METHODS:
+                await self.mqtt.request(serial, method)
         return self.mqtt.states
+
+    async def async_set_config(
+        self, serial: str, key_path: list[str], patch: dict[str, Any]
+    ) -> None:
+        """Send a config change; the device confirms by pushing its new state.
+
+        The full sub-config is sent, so it is re-read first – otherwise changes
+        made in the app since our last read would be overwritten.
+        """
+        try:
+            await self.mqtt.query(serial, GET_CONFIG_FILE, timeout=COMMAND_TIMEOUT_SECONDS)
+            await self.mqtt.set_config(serial, key_path, patch)
+        except (CannotConnect, TimeoutError) as err:
+            raise HomeAssistantError(
+                translation_domain=DOMAIN, translation_key="command_failed"
+            ) from err
+        # Reflect the change right away; the device's push follows within seconds.
+        self.async_update_listeners()
 
     def is_online(self, serial: str) -> bool:
         last = self._last_seen.get(serial)

@@ -27,7 +27,8 @@ line-length = 100
 select = ["E", "F", "W", "I", "UP", "B", "ASYNC", "RUF"]
 # Ambiguous-unicode rules: we write German/typographic text in docs and strings.
 # ASYNC109: explicit timeout parameters are intended in the public API.
-ignore = ["RUF001", "RUF002", "RUF003", "ASYNC109"]
+# RUF012: HA entities use mutable class attributes (_attr_*) by convention.
+ignore = ["RUF001", "RUF002", "RUF003", "RUF012", "ASYNC109"]
 
 [tool.ruff.lint.per-file-ignores]
 # The CLI is an interactive dev tool; blocking input/file IO is fine there.
