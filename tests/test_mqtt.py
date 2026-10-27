@@ -89,3 +89,18 @@ async def test_set_config_outlet_uses_last_key() -> None:
     await mqtt.set_config("S1", ["outlet", "O3"], {"mOnOff": 1})
     _, payload = client.published[0]
     assert payload["params"] == {"keyPath": ["outlet", "O3"], "O3": {**O3, "mOnOff": 1}}
+
+
+def test_is_auth_failure() -> None:
+    import aiomqtt
+    from aiomqtt.exceptions import MqttConnectError
+    from paho.mqtt.packettypes import PacketTypes
+    from paho.mqtt.reasoncodes import ReasonCode
+
+    from sfcloud.mqtt import is_auth_failure
+
+    bad_login = ReasonCode(PacketTypes.CONNACK, "Bad user name or password")
+    assert is_auth_failure(MqttConnectError(bad_login))
+    assert is_auth_failure(aiomqtt.MqttCodeError(5))
+    assert not is_auth_failure(aiomqtt.MqttCodeError(7))
+    assert not is_auth_failure(aiomqtt.MqttError("network down"))

@@ -1,0 +1,46 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Spider-Farmer-Konto",
+        "description": "Gib die E-Mail-Adresse deines Spider-Farmer-App-Kontos ein. Du bekommst einen einmaligen Login-Code zugeschickt.\n\nHinweis: Der Login hier meldet dich in der Spider-Farmer-App ab. Melde dich danach einfach wieder in der App an – Home Assistant läuft weiter.",
+        "data": {
+          "email": "E-Mail"
+        }
+      },
+      "code": {
+        "title": "Login-Code eingeben",
+        "description": "Ein Login-Code wurde an {email} geschickt.",
+        "data": {
+          "code": "Login-Code"
+        }
+      },
+      "reauth_confirm": {
+        "title": "Erneut anmelden",
+        "description": "Die Spider-Farmer-Cloud hat den gespeicherten Login für {email} abgelehnt. Bestätige, um einen neuen Login-Code per E-Mail zu erhalten."
+      }
+    },
+    "error": {
+      "cannot_connect": "Verbindung fehlgeschlagen",
+      "send_code_failed": "Login-Code konnte nicht gesendet werden. Prüfe die E-Mail-Adresse.",
+      "invalid_code": "Der Login-Code ist ungültig oder abgelaufen.",
+      "unknown": "Unerwarteter Fehler"
+    },
+    "abort": {
+      "already_configured": "Konto ist bereits eingerichtet",
+      "reauth_successful": "Erneute Anmeldung erfolgreich",
+      "wrong_account": "Dieser Login gehört zu einem anderen Spider-Farmer-Konto.",
+      "no_devices": "In diesem Spider-Farmer-Konto wurden keine Geräte gefunden."
+    }
+  },
+  "entity": {
+    "sensor": {
+      "vpd": { "name": "VPD" },
+      "ppfd": { "name": "PPFD" },
+      "soil_temperature": { "name": "Bodentemperatur" },
+      "soil_moisture": { "name": "Bodenfeuchte" },
+      "soil_ec": { "name": "Boden-EC" },
+      "uptime": { "name": "Laufzeit" }
+    }
+  }
+}

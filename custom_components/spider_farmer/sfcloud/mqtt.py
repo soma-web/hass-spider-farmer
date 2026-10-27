@@ -23,7 +23,7 @@ from typing import Any
 
 import aiomqtt
 
-from .exceptions import CannotConnect
+from .exceptions import AuthError, CannotConnect
 from .models import Device
 
 _LOGGER = logging.getLogger(__name__)
@@ -37,6 +37,9 @@ GET_CONFIG_FILE = "getConfigFile"
 SET_CONFIG_FIELD = "setConfigField"
 
 INITIAL_REQUESTS = (GET_SYS_STA, GET_DEV_STA, GET_CONFIG_FILE)
+
+# CONNACK codes for rejected credentials: MQTT 3.1.1 (4, 5) and MQTT 5 / paho ReasonCode (134, 135).
+_AUTH_FAILURE_CODES = frozenset({4, 5, 134, 135})
 
 MessageCallback = Callable[[str | None, dict[str, Any]], None]
 ConnectionCallback = Callable[[bool], None]
@@ -83,6 +86,13 @@ def build_set_config(
         "msgId": _msg_id(),
         "params": {"keyPath": list(key_path), key_path[-1]: {**current, **patch}},
     }
+
+
+def is_auth_failure(err: aiomqtt.MqttError) -> bool:
+    """True if the broker rejected our username/password."""
+    if not isinstance(err, aiomqtt.MqttCodeError):
+        return False
+    return getattr(err.rc, "value", err.rc) in _AUTH_FAILURE_CODES
 
 
 def _tls_context() -> ssl.SSLContext:
@@ -133,11 +143,16 @@ class SpiderFarmerMqtt:
         return self._client is not None
 
     async def run(self, reconnect_interval: float = 10) -> None:
-        """Connect and process messages forever, reconnecting on errors."""
+        """Connect and process messages forever, reconnecting on errors.
+
+        Raises `AuthError` (and stops) when the broker rejects the credentials.
+        """
         while True:
             try:
                 await self._run_once()
             except aiomqtt.MqttError as err:
+                if is_auth_failure(err):
+                    raise AuthError(str(err), "MQTT login rejected", "mqtt") from err
                 _LOGGER.warning("MQTT connection lost: %s", err)
             finally:
                 if self._client is not None:

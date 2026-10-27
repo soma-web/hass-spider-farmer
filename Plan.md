@@ -12,7 +12,8 @@
 - [x] Architektur festgelegt
 - [x] Meilensteine definiert
 - [x] M0 – Projekt-Setup (lokal; offen: GitHub-Repo anlegen, WSL2)
-- [ ] **In Arbeit:** M1 – Library + CLI fertig (20 Tests grün), Hardware-Verifikation steht aus
+- [x] M1 – Library + CLI, Hardware-Verifikation (Lesen, Steuern, Push, Koexistenz mit App)
+- [ ] **In Arbeit:** M2 – Code fertig, End-to-End-Test in HA läuft
 
 ---
 
@@ -129,7 +130,7 @@ spider-farmer-hass/
 - [x] Windows-venv `.venv` (Python 3.15.1), `pyproject.toml` (ruff, pytest) – `pytest` + `ruff check` grün
 - [x] Grundgerüst `custom_components/spider_farmer` + `manifest.json` + `hacs.json` + README + CI-Workflow (hassfest, HACS, pytest)
   - `config_flow` im Manifest vorerst `false`, wird in M2 auf `true` gesetzt
-- [ ] WSL2: **noch nicht installiert** (`wsl --install` als Admin + Neustart), danach HA-Core-venv, `custom_components` per Symlink auf das Repo. Wird erst für M2 gebraucht.
+- [x] WSL2 Ubuntu 24.04 + `uv` + Python 3.14 + HA 2026.10.4 in `~/ha-dev/.venv`; Start mit `wsl -e bash /mnt/k/Projects/spider-farmer-hass/scripts/ha-dev.sh` → http://localhost:8123 (Integration per Symlink, `default_config` ohne Voice/Cloud, da `pymicro-vad` ohne Compiler nicht baut)
 
 ### M1 – Protokoll-Library + CLI (Windows)
 - [x] `crypto.py` (+ `exceptions.py`, `models.py`) mit Tests
@@ -146,11 +147,14 @@ spider-farmer-hass/
   - [x] Region EU: `api.spider-farmer.com` funktioniert
 
 ### M2 – HA-Grundgerüst (nur lesen)
-- [ ] Config Flow E-Mail → OTP, Reauth
-- [ ] Coordinator mit MQTT-Push + Fallback-Poll
-- [ ] Device Registry (Serial, Modell, Firmware)
-- [ ] `sensor`, `binary_sensor`, Diagnose-Sensoren
-- [ ] Übersetzungen de/en
+- [x] Config Flow E-Mail → OTP, Reauth (bei MQTT-Login-Ablehnung), Geräteliste im Config Entry (D11)
+- [x] Coordinator mit MQTT-Push + Fallback-Poll (60 s, nur wenn Pushes ausbleiben), Online = Nachricht in den letzten 120 s
+- [x] Device Registry (Serial, Modell, Firmware, HW-Version)
+- [x] `sensor` (Temp, Feuchte, VPD, PPFD, CO2, Boden-Temp/-Feuchte/-EC – nur was das Gerät meldet), `binary_sensor` (Online), Diagnose (WLAN, Laufzeit)
+- [ ] End-to-End-Test in HA (WSL)
+- [ ] HA-Tests mit `pytest-homeassistant-custom-component` (in WSL)
+- [ ] Mehrere Bodensensoren (`sensors[]` mit IDs wie `AA01`) als eigene Entities
+- [x] Übersetzungen de/en
 
 ### M3 – Steuerung
 - [ ] Config-Cache (`getConfigFile`) + Merge für `setConfigField`

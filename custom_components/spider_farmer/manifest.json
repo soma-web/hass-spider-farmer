@@ -2,7 +2,7 @@
   "domain": "spider_farmer",
   "name": "Spider Farmer",
   "codeowners": ["@somesoma"],
-  "config_flow": false,
+  "config_flow": true,
   "documentation": "https://github.com/somesoma/spider-farmer-hass",
   "integration_type": "hub",
   "iot_class": "cloud_push",
