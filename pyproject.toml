@@ -1,0 +1,27 @@
+[project]
+name = "spider-farmer-hass"
+version = "0.0.1"
+description = "Home Assistant integration for Spider Farmer grow controllers (cloud REST + MQTT)"
+requires-python = ">=3.13"
+
+[dependency-groups]
+dev = [
+    "aiohttp",
+    "aiomqtt>=2.0.0",
+    "cryptography",
+    "pytest",
+    "pytest-asyncio",
+    "ruff",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+pythonpath = [".", "custom_components/spider_farmer"]
+
+[tool.ruff]
+target-version = "py313"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B", "ASYNC", "RUF"]

@@ -1,0 +1,29 @@
+# Reverse-engineering reference (separate repo)
+reverse-spider-farmer/
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+
+# Local secrets / CLI session (token, MQTT password)
+.env
+*.session.json
+secrets.yaml
+
+# Local HA config used for development
+config/
+
+# IDE / OS
+.idea/
+.vscode/
+*.swp
+.DS_Store
+Thumbs.db

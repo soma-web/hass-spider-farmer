@@ -1,0 +1,13 @@
+{
+  "domain": "spider_farmer",
+  "name": "Spider Farmer",
+  "codeowners": ["@somesoma"],
+  "config_flow": false,
+  "documentation": "https://github.com/somesoma/spider-farmer-hass",
+  "integration_type": "hub",
+  "iot_class": "cloud_push",
+  "issue_tracker": "https://github.com/somesoma/spider-farmer-hass/issues",
+  "loggers": ["custom_components.spider_farmer"],
+  "requirements": ["aiomqtt>=2.0.0"],
+  "version": "0.0.1"
+}

@@ -1,0 +1,150 @@
+# Spider Farmer → Home Assistant Integration – Plan
+
+> Lebendes Dokument. Stand: 2026-10-27
+> Quelle der Protokoll-Infos: `reverse-spider-farmer/` (03-api-reference.md, 04-mqtt-control.md, client/)
+> Repo: https://github.com/somesoma/spider-farmer-hass · Domain: `spider_farmer`
+
+## Status
+
+- [x] Reverse-Engineering-Repo geklont (`reverse-spider-farmer/`, per `.gitignore` ausgeschlossen)
+- [x] Doku gelesen und Protokoll zusammengefasst
+- [x] Offene Fragen geklärt
+- [x] Architektur festgelegt
+- [x] Meilensteine definiert
+- [x] M0 – Projekt-Setup (lokal; offen: GitHub-Repo anlegen, WSL2)
+- [ ] **Nächster Schritt:** M1 – Protokoll-Library + CLI
+
+---
+
+## 1. Was wir über das Protokoll wissen
+
+### REST (Cloud)
+- `POST https://api.spider-farmer.com/api/android/<module>/<action>/v2`
+- Body: JSON → AES-128-CBC/PKCS7 (statischer Key `Meizhi1234567890`, IV `1234567890123456`) → Base64
+- Header `systemdata` (Klartext-JSON) mit `token`, `reqId`, `timestamp`, `appVersion` …
+- Antwort: `{"code":"000","msg":"success","data":…}`
+- Region: `getBelongingUrlInfo` liefert z. B. `EU` / `https://spiderfarmer.eu` (Auswirkung auf API-Basis unklar)
+
+### Login
+1. `ulogin/getEmailCode/v2` `{email, isLogin:1}` → OTP per Mail
+2. `ulogin/mailLogin/v2` `{email, loginMethod:2, otpCode}` → `token`, `userId`, `mqttName`, `mqttPwd`
+- Kein Passwort-Login dokumentiert → Config Flow in 2 Schritten (E-Mail, dann Code)
+- Token-Lebensdauer unbekannt → Reauth-Flow
+
+### Geräte-Discovery
+- `udm/getUserRooms/v2` → Räume
+- `udm/getDeviceList/v2` `{belonginRoomId, userId}` → Geräte inkl. `productType`, `deviceSerialnum`, `deviceInfo` (JSON-String, doppelt parsen)
+- `udm/getSocketCustomizeName/v2` → eigene Namen der Steckdosen
+
+### Realtime + Steuerung (MQTT, Cloud)
+- `mqtts://sf.mqtt.spider-farmer.com:8883`, self-signed Cert, Login `mqttName`/`mqttPwd`
+- Topics: `<prefix>/API/UP/<serial>` (Gerät → App), `<prefix>/API/DOWN/<serial>` (App → Gerät), `SF/Offline/<userId>`
+  - `<prefix>` = `productType` mit `-` → `/` (z. B. `SF/GGS/PS5`)
+- Abfragen (auf DOWN): `getDevSta`, `getSysSta`, `getConfigFile`, `getDevOpLog`
+- Steuern: `setConfigField` mit `keyPath:["device",<comp>]` + **komplettem** Sub-Config-Objekt (`mOnOff`, `mLevel`, …)
+  - Ablauf: `getConfigFile` → Feld ändern → ganzes Objekt senden
+  - Bestätigt: blower on/off/level, fan on/off. **Nicht bestätigt:** light, outlet
+
+### Datenpunkte (aus `getDevSta`)
+| Komponente | Felder | HA-Entity |
+|---|---|---|
+| sensor | temp, humi, vpd, ppfd, co2, tempSoil, humiSoil, ECSoil | `sensor` |
+| outlet | psmode, O1–O5 `{on, modeType}` | `switch` je Steckdose |
+| light | level, modeType | `light` (Helligkeit) |
+| blower | on, level (0–100?) | `fan` mit Prozent |
+| fan | on, level (1–10?) | `fan` mit Stufen |
+| sys (`getSysSta`) | ver, hwver, wifi.rssi, upTime, mqtt.isConnect | Diagnose-`sensor` |
+
+## 2. Entscheidungen
+
+- **D1 – Architektur:** Native Custom Integration `custom_components/spider_farmer`. REST-API für Login, Geräteliste, Namen, Historie; Cloud-MQTT für Live-Status (Push) und Steuerung. Alles direkt aus HA, kein Zusatzdienst. `iot_class: cloud_push`.
+- **D2 – MVP:** Alle Sensoren + An/Aus/Stufe für Steckdosen O1–O5, Lampe, Abluft, Umluft. Modi (`modeType`, Zeitplan/Zyklus) nicht im MVP.
+- **D3 – Verteilung:** Öffentliches GitHub-Repo `somesoma/spider-farmer-hass`, HACS-kompatibel (`hacs.json`, Releases, README, HACS- und hassfest-Validierung per GitHub Action).
+- **D4 – Auth:** Config Flow E-Mail → OTP; bei ungültigem Token Reauth-Flow mit neuem Code. Gespeichert werden `token`, `userId`, `mqttName`, `mqttPwd`.
+- **D5 – Entwicklung:** Windows-venv für Code + Unit-Tests; HA-Core zum End-to-End-Test in **WSL2** (HA-Core läuft unter Windows nicht offiziell). Python-Version wie die aktuelle HA-Version.
+- **D6 – Entities:** Lampe = `light` (0–100 %), Abluft = `fan` mit Prozent, Umluft = `fan` mit Stufen, Steckdosen = `switch` (Namen aus `getSocketCustomizeName`), Messwerte = `sensor`, Online = `binary_sensor`, WLAN/Firmware/Uptime = Diagnose-`sensor`.
+- **D7 – Schalten im Auto-Modus:** Gleiche Payload wie die App bei manueller Bedienung. Verhalten an der Hardware prüfen.
+- **D8 – Historie:** Cloud-Historie (`dr/getDeviceTHPData/v2`, 5-Min-Samples) als importierte Statistik beim Einrichten; später Lücken nach Ausfällen füllen.
+- **D9 – Code-Struktur:** Protokoll-Code eingebettet als Unterpaket `custom_components/spider_farmer/sfcloud/` **ohne HA-Imports** → unter Windows testbar, später als PyPI-Paket auslagerbar. Innerhalb von `sfcloud` nur relative Imports; Tests/CLI importieren es als Top-Level-Paket `sfcloud` (sonst würde `spider_farmer/__init__.py` HA nachladen).
+- **D10 – Transport:** Cloud-only. Lokale Steuerung (BLE/LAN) ist ein späteres, eigenes Thema.
+
+## 3. Geplante Struktur
+
+```
+spider-farmer-hass/
+├─ custom_components/spider_farmer/
+│  ├─ __init__.py          Setup, Coordinator starten
+│  ├─ manifest.json        domain, iot_class cloud_push, requirements
+│  ├─ config_flow.py       E-Mail → OTP → fertig; Reauth
+│  ├─ coordinator.py       hält Gerätestatus, verteilt MQTT-Push an Entities
+│  ├─ entity.py            Basis-Entity, DeviceInfo
+│  ├─ sensor.py / binary_sensor.py / switch.py / light.py / fan.py
+│  ├─ history.py           Import der Cloud-Historie in Statistiken
+│  ├─ diagnostics.py       Diagnose-Download (Secrets geschwärzt)
+│  ├─ strings.json, translations/{de,en}.json
+│  └─ sfcloud/             Protokoll-Library (ohne HA)
+│     ├─ crypto.py         AES-Body-Cipher
+│     ├─ rest.py           REST-Client (aiohttp)
+│     ├─ mqtt.py           Cloud-MQTT-Client (aiomqtt/paho), Status + setConfigField
+│     └─ models.py         Device, DeviceState, Config
+├─ scripts/sf_cli.py       CLI: login, devices, status, set … (Hardware-Tests)
+├─ tests/
+├─ hacs.json, README.md, LICENSE
+└─ .github/workflows/      hassfest, HACS-Validierung, Tests
+```
+
+## 4. Meilensteine
+
+### M0 – Projekt-Setup
+- [x] `git init` (Branch `main`), Remote `somesoma/spider-farmer-hass`, `.gitignore` (inkl. `reverse-spider-farmer/`, venv, Secrets)
+- [ ] GitHub-Repo `somesoma/spider-farmer-hass` existiert noch nicht → anlegen, dann erster Push
+- [x] Windows-venv `.venv` (Python 3.15.1), `pyproject.toml` (ruff, pytest) – `pytest` + `ruff check` grün
+- [x] Grundgerüst `custom_components/spider_farmer` + `manifest.json` + `hacs.json` + README + CI-Workflow (hassfest, HACS, pytest)
+  - `config_flow` im Manifest vorerst `false`, wird in M2 auf `true` gesetzt
+- [ ] WSL2: **noch nicht installiert** (`wsl --install` als Admin + Neustart), danach HA-Core-venv, `custom_components` per Symlink auf das Repo. Wird erst für M2 gebraucht.
+
+### M1 – Protokoll-Library + CLI (Windows)
+- [ ] `crypto.py` + Tests mit bekannten Samples
+- [ ] `rest.py`: Login (OTP), Rooms, Devices, Socket-Namen, Historie
+- [ ] `mqtt.py`: Verbinden, `getDevSta`/`getSysSta`/`getConfigFile`, `setConfigField`
+- [ ] CLI zum Testen gegen deine Hardware
+- [ ] **Hardware-Verifikation:**
+  - [ ] Light- und Outlet-Steuerung (Payload-Form)
+  - [ ] Level-Bereiche Blower/Fan/Light
+  - [ ] Parallel-Betrieb mit der App: wird die App-Session durch HA-Login ungültig? MQTT-Client-ID-Konflikte?
+  - [ ] Pusht das Gerät von selbst, oder muss `getDevSta` gepollt werden?
+  - [ ] Region EU: andere API-Basis nötig?
+
+### M2 – HA-Grundgerüst (nur lesen)
+- [ ] Config Flow E-Mail → OTP, Reauth
+- [ ] Coordinator mit MQTT-Push + Fallback-Poll
+- [ ] Device Registry (Serial, Modell, Firmware)
+- [ ] `sensor`, `binary_sensor`, Diagnose-Sensoren
+- [ ] Übersetzungen de/en
+
+### M3 – Steuerung
+- [ ] Config-Cache (`getConfigFile`) + Merge für `setConfigField`
+- [ ] `switch` (O1–O5), `light`, `fan` (Abluft Prozent, Umluft Stufen)
+- [ ] Zustand nach Befehl über `getDevSta` bestätigen
+
+### M4 – Historie
+- [ ] Import `getDeviceTHPData` als Statistik beim Einrichten
+- [ ] Optional: Lücken nach Ausfall nachladen
+
+### M5 – Release
+- [ ] `diagnostics.py` (Token/Passwort geschwärzt)
+- [ ] README (Installation über HACS, Einrichtung, Hinweis „inoffiziell“)
+- [ ] GitHub Actions: hassfest, HACS-Validierung, pytest
+- [ ] Release v0.1.0
+
+### Später
+- Modi (Zeitplan/Zyklus/Auto) als `select`/`number`
+- Alarme (`alarmLog`), Stromdaten (`getDevicePowerData`)
+- Lokale Steuerung (BLE/LAN)
+
+## 5. Risiken
+
+- **Light/Outlet-Payload unbestätigt:** wird in M1 an der Hardware geklärt
+- **Session-Konflikt mit der App:** möglicherweise wirft ein Login in HA die App raus (oder umgekehrt); wird in M1 getestet
+- **Inoffizielle API:** Spider Farmer kann sie jederzeit ändern (App-Version im `systemdata`-Header)
+- **Self-signed MQTT-Zertifikat:** TLS ohne Prüfung nötig, im README dokumentieren
