@@ -8,6 +8,7 @@ CONF_USER_ID = "user_id"
 CONF_MQTT_USERNAME = "mqtt_username"
 CONF_MQTT_PASSWORD = "mqtt_password"
 CONF_DEVICES = "devices"
+CONF_HISTORY_IMPORTED = "history_imported"
 
 # Fallback poll when the device stops pushing (it normally pushes every ~6 s).
 POLL_INTERVAL_SECONDS = 60
@@ -19,3 +20,5 @@ FIRST_DATA_TIMEOUT_SECONDS = 30
 COMMAND_TIMEOUT_SECONDS = 10
 # Re-read the device config (modes, oscillation, …) so app changes show up.
 CONFIG_REFRESH_SECONDS = 300
+# How many days of cloud history to import at setup (stops earlier if the cloud has less).
+HISTORY_DAYS = 30
