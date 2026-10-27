@@ -6,7 +6,7 @@ import json
 import logging
 import random
 import time
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any
 
 import aiohttp
@@ -153,7 +153,14 @@ class SpiderFarmerApi:
     async def get_sensor_history(
         self, serial: str, start: datetime, end: datetime, period: str = "day"
     ) -> list[dict[str, Any]]:
-        """Sensor samples (5-minute resolution for `period="day"`)."""
+        """Sensor samples (5-minute resolution for `period="day"`).
+
+        The API works in UTC (request range and `addTime`, format
+        `MM-DD-YYYY HH:MM:SS`); naive datetimes are treated as UTC. Values are strings.
+        """
+        start, end = (
+            (dt if dt.tzinfo else dt.replace(tzinfo=UTC)).astimezone(UTC) for dt in (start, end)
+        )
         data = await self.call(
             "dr/getDeviceTHPData/v2",
             {

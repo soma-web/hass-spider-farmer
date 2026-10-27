@@ -55,17 +55,25 @@ def _msg_id() -> str:
     return str(int(time.time() * 1000))
 
 
-def component_config(config: dict[str, Any] | None, comp: str) -> dict[str, Any]:
-    """Current sub-config of `comp` from a getConfigFile payload."""
-    if not config:
-        return {}
-    # TODO(M1): confirm whether getConfigFile nests components under "device".
-    root = config.get("device") if isinstance(config.get("device"), dict) else config
-    return dict(root.get(comp) or {})
+def config_at(config: dict[str, Any] | None, key_path: list[str]) -> dict[str, Any]:
+    """Sub-config at `key_path` of a getConfigFile payload.
+
+    getConfigFile returns `{"configFile": {"device": {"light", "fan", "blower"},
+    "outlet": {"O1".."O5"}, "target": {...}}}`; `key_path` is relative to
+    `configFile`, e.g. `["device", "blower"]` or `["outlet", "O3"]`.
+    """
+    node: Any = (config or {}).get("configFile", config or {})
+    for key in key_path:
+        node = node.get(key) if isinstance(node, dict) else None
+    return dict(node) if isinstance(node, dict) else {}
 
 
 def build_set_config(
-    serial: str, user_id: str, comp: str, current: dict[str, Any], patch: dict[str, Any]
+    serial: str,
+    user_id: str,
+    key_path: list[str],
+    current: dict[str, Any],
+    patch: dict[str, Any],
 ) -> dict[str, Any]:
     """A setConfigField command carrying the complete merged sub-config."""
     return {
@@ -73,7 +81,7 @@ def build_set_config(
         "pid": serial,
         "uid": user_id,
         "msgId": _msg_id(),
-        "params": {"keyPath": ["device", comp], comp: {**current, **patch}},
+        "params": {"keyPath": list(key_path), key_path[-1]: {**current, **patch}},
     }
 
 
@@ -210,22 +218,28 @@ class SpiderFarmerMqtt:
             if waiters and fut in waiters:
                 waiters.remove(fut)
 
-    async def set_component(self, serial: str, comp: str, patch: dict[str, Any]) -> dict[str, Any]:
-        """Merge `patch` into the component's full config and send it (like the app)."""
+    async def set_config(
+        self, serial: str, key_path: list[str], patch: dict[str, Any]
+    ) -> dict[str, Any]:
+        """Merge `patch` into the full sub-config at `key_path` and send it (like the app)."""
         state = self.states[serial]
         if state.config is None:
             await self.query(serial, GET_CONFIG_FILE)
-        current = component_config(state.config, comp)
-        command = build_set_config(serial, self.user_id, comp, current, patch)
+        current = config_at(state.config, key_path)
+        command = build_set_config(serial, self.user_id, key_path, current, patch)
         await self._publish(serial, command)
-        merged = command["params"][comp]
-        self._store_component(state, comp, merged)
+        self._store_config(state, key_path, command["params"][key_path[-1]])
         return command
 
+    async def set_component(self, serial: str, comp: str, patch: dict[str, Any]) -> dict[str, Any]:
+        """Shortcut for `device.<comp>` (light, fan, blower)."""
+        return await self.set_config(serial, ["device", comp], patch)
+
     @staticmethod
-    def _store_component(state: DeviceState, comp: str, value: dict[str, Any]) -> None:
+    def _store_config(state: DeviceState, key_path: list[str], value: dict[str, Any]) -> None:
         if state.config is None:
             state.config = {}
-        root = state.config.get("device")
-        target = root if isinstance(root, dict) else state.config
-        target[comp] = value
+        node = state.config.setdefault("configFile", {})
+        for key in key_path[:-1]:
+            node = node.setdefault(key, {})
+        node[key_path[-1]] = value

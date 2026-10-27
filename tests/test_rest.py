@@ -93,3 +93,17 @@ async def test_get_all_devices_across_rooms() -> None:
     devices = await api.get_all_devices(5)
     assert [d.serial for d in devices] == ["S1"]
     assert session.requests[1]["payload"] == {"belonginRoomId": 1, "userId": 5}
+
+
+async def test_history_range_is_sent_in_utc() -> None:
+    from datetime import datetime, timedelta, timezone
+
+    session = FakeSession(ok([]))
+    api = SpiderFarmerApi(session, "TOK")  # type: ignore[arg-type]
+    cet = timezone(timedelta(hours=1))
+    await api.get_sensor_history(
+        "S1", datetime(2026, 10, 27, 0, 0, tzinfo=cet), datetime(2026, 10, 27, 12, 0, tzinfo=cet)
+    )
+    payload = session.requests[0]["payload"]
+    assert payload["startDate"] == "2026-10-26 23:00:00"
+    assert payload["endDate"] == "2026-10-27 11:00:00"

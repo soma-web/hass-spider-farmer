@@ -55,6 +55,18 @@
 | fan | on, level (1–10?) | `fan` mit Stufen |
 | sys (`getSysSta`) | ver, hwver, wifi.rssi, upTime, mqtt.isConnect | Diagnose-`sensor` |
 
+### Erkenntnisse aus dem Hardware-Test (2026-10-27, GGS PS5, FW 3.14)
+- ✅ REST-Login per OTP, Region (`EU`, `https://spiderfarmer.eu` – API funktioniert trotzdem über `api.spider-farmer.com`), Räume (Key `id`), Geräte
+- ✅ `deviceInfo` aus der REST-Geräteliste ist **veraltet** (Stand Mai 2025) → Live-Werte nur über MQTT
+- ✅ `getSocketCustomizeName` liefert `null` (keine eigenen Namen vergeben, oder Payload falsch)
+- ✅ MQTT-Login + `getSysSta`, `getDevSta`, `getConfigFile` antworten sofort
+- `getDevSta` enthält zusätzlich `sensors[]` (je Bodensensor eine ID, z. B. `AA01`, plus `avg`) und `oplogLast`/`alarmLast`
+- `getConfigFile` → `data.configFile` mit `device.{light,fan,blower}`, `outlet.{O1..O5}`, `target.{dayTime,temp,humi,co2}`
+  - `keyPath` ist der Pfad in `configFile` → Steckdosen vermutlich `["outlet","O3"]` (noch zu bestätigen)
+  - `modeType` z. B. Licht 1 (Zeitplan), Steckdose O1 3 (Zyklus), viele 0 (manuell?)
+- ✅ Historie `getDeviceTHPData`: Zeitbereich und `addTime` in **UTC**, Werte als Strings, 5-Min-Raster
+- Antworten enthalten `pcode`, `UTC`, `code: 200`
+
 ## 2. Entscheidungen
 
 - **D1 – Architektur:** Native Custom Integration `custom_components/spider_farmer`. REST-API für Login, Geräteliste, Namen, Historie; Cloud-MQTT für Live-Status (Push) und Steuerung. Alles direkt aus HA, kein Zusatzdienst. `iot_class: cloud_push`.
@@ -108,13 +120,14 @@ spider-farmer-hass/
 - [x] `rest.py`: Login (OTP), Region, Rooms, Devices (über alle Räume), Socket-Namen, Historie, `call_raw` für beliebige Endpunkte
 - [x] `mqtt.py`: eine Verbindung für alle Geräte, Auto-Reconnect, eindeutige Client-ID, State-Cache, `request`/`query` (wartet auf Antwort), `set_component` (Merge in komplette Sub-Config)
 - [x] CLI `scripts/sf_cli.py`: `login`, `devices [--raw]`, `status`, `watch`, `set`, `history`, `call` (Session in `sf.session.json`, git-ignored)
-- [ ] Offene TODOs im Code klären: Fehlercodes bei ungültigem Token (`AUTH_ERROR_CODES`), Room-ID-Key in `getUserRooms`, Verschachtelung von `getConfigFile` (`device`-Ebene?)
+- [x] Room-ID-Key (`id`) und Verschachtelung von `getConfigFile` (`configFile.device/outlet/target`) geklärt → Library auf beliebige `keyPath`s umgestellt (`set_config`)
+- [ ] Fehlercodes bei ungültigem Token (`AUTH_ERROR_CODES`) – erst sichtbar, wenn ein Token abläuft
 - [ ] **Hardware-Verifikation:**
   - [ ] Light- und Outlet-Steuerung (Payload-Form)
   - [ ] Level-Bereiche Blower/Fan/Light
   - [ ] Parallel-Betrieb mit der App: wird die App-Session durch HA-Login ungültig? MQTT-Client-ID-Konflikte?
   - [ ] Pusht das Gerät von selbst, oder muss `getDevSta` gepollt werden?
-  - [ ] Region EU: andere API-Basis nötig?
+  - [x] Region EU: `api.spider-farmer.com` funktioniert
 
 ### M2 – HA-Grundgerüst (nur lesen)
 - [ ] Config Flow E-Mail → OTP, Reauth

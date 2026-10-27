@@ -7,6 +7,7 @@ Usage (from the repo root, with the venv active):
     python scripts/sf_cli.py status <serial>
     python scripts/sf_cli.py watch
     python scripts/sf_cli.py set <serial> blower mOnOff=1 mLevel=35
+    python scripts/sf_cli.py set <serial> outlet.O3 mOnOff=1
     python scripts/sf_cli.py history <serial> --hours 6
     python scripts/sf_cli.py call udm/getUserRooms/v2 '{}'
 
@@ -21,7 +22,7 @@ import asyncio
 import json
 import logging
 import sys
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
@@ -168,7 +169,8 @@ async def cmd_set(api: SpiderFarmerApi, args: argparse.Namespace) -> None:
     await wait_connected(mqtt)
     await mqtt.query(args.serial, "getConfigFile")
     print("\n-> sending:")
-    dump(await mqtt.set_component(args.serial, args.component, patch))
+    key_path = args.component.split(".") if "." in args.component else ["device", args.component]
+    dump(await mqtt.set_config(args.serial, key_path, patch))
     await asyncio.sleep(2)
     await mqtt.request(args.serial, "getDevSta")
     await asyncio.sleep(args.wait)
@@ -177,7 +179,7 @@ async def cmd_set(api: SpiderFarmerApi, args: argparse.Namespace) -> None:
 
 async def cmd_history(api: SpiderFarmerApi, args: argparse.Namespace) -> None:
     load_session()
-    end = datetime.now()
+    end = datetime.now(UTC)
     dump(await api.get_sensor_history(args.serial, end - timedelta(hours=args.hours), end))
 
 
@@ -210,7 +212,7 @@ async def main() -> None:
 
     p = sub.add_parser("set", help="setConfigField, e.g. `set <serial> blower mOnOff=1`")
     p.add_argument("serial")
-    p.add_argument("component", help="blower | fan | light | outlet | …")
+    p.add_argument("component", help="blower | fan | light | outlet.O1 … (path in configFile)")
     p.add_argument("fields", nargs="+", help="key=value (JSON values allowed)")
     p.add_argument("--wait", type=float, default=5, help="seconds to watch replies")
     p.set_defaults(func=cmd_set)
@@ -226,6 +228,7 @@ async def main() -> None:
     p.set_defaults(func=cmd_call)
 
     args = parser.parse_args()
+    sys.stdout.reconfigure(encoding="utf-8")  # Windows consoles default to cp1252
     logging.basicConfig(level=logging.DEBUG if args.verbose else logging.WARNING)
 
     token = load_session().get("token") if SESSION_FILE.exists() else None

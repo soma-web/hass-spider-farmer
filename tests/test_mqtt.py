@@ -2,11 +2,12 @@
 
 from __future__ import annotations
 
+import copy
 import json
 from typing import Any
 
 from sfcloud import Device, SpiderFarmerMqtt
-from sfcloud.mqtt import build_set_config, component_config
+from sfcloud.mqtt import build_set_config, config_at
 
 DEVICE = Device.from_api({"deviceSerialnum": "S1", "productType": "SF-GGS-PS5"})
 BLOWER = {"modeType": 0, "minSpeed": 0, "maxSpeed": 36, "mOnOff": 0, "mLevel": 35}
@@ -28,14 +29,19 @@ def make() -> tuple[SpiderFarmerMqtt, FakeClient, list]:
     return mqtt, client, received
 
 
-def test_component_config_flat_and_nested() -> None:
-    assert component_config({"blower": BLOWER}, "blower") == BLOWER
-    assert component_config({"device": {"blower": BLOWER}}, "blower") == BLOWER
-    assert component_config(None, "blower") == {}
+O3 = {"modeType": 0, "tempAdd": 1, "mOnOff": 0}
+CONFIG = {"configFile": {"device": {"blower": BLOWER}, "outlet": {"O3": O3}}}
+
+
+def test_config_at() -> None:
+    assert config_at(CONFIG, ["device", "blower"]) == BLOWER
+    assert config_at(CONFIG, ["outlet", "O3"]) == O3
+    assert config_at(CONFIG, ["device", "missing"]) == {}
+    assert config_at(None, ["device", "blower"]) == {}
 
 
 def test_build_set_config_sends_full_object() -> None:
-    cmd = build_set_config("S1", "42", "blower", BLOWER, {"mOnOff": 1})
+    cmd = build_set_config("S1", "42", ["device", "blower"], BLOWER, {"mOnOff": 1})
     assert cmd["method"] == "setConfigField"
     assert cmd["params"]["keyPath"] == ["device", "blower"]
     assert cmd["params"]["blower"] == {**BLOWER, "mOnOff": 1}
@@ -67,9 +73,19 @@ async def test_request_publishes_on_down_topic() -> None:
 
 async def test_set_component_merges_cached_config() -> None:
     mqtt, client, _ = make()
-    mqtt.states["S1"].config = {"blower": dict(BLOWER), "fan": {"mOnOff": 0}}
+    mqtt.states["S1"].config = {
+        "configFile": {"device": {"blower": dict(BLOWER), "fan": {"mOnOff": 0}}}
+    }
     await mqtt.set_component("S1", "blower", {"mOnOff": 1, "mLevel": 40})
     _, payload = client.published[0]
     assert payload["params"]["blower"] == {**BLOWER, "mOnOff": 1, "mLevel": 40}
-    assert mqtt.states["S1"].config["blower"]["mLevel"] == 40
-    assert mqtt.states["S1"].config["fan"] == {"mOnOff": 0}
+    assert config_at(mqtt.states["S1"].config, ["device", "blower"])["mLevel"] == 40
+    assert config_at(mqtt.states["S1"].config, ["device", "fan"]) == {"mOnOff": 0}
+
+
+async def test_set_config_outlet_uses_last_key() -> None:
+    mqtt, client, _ = make()
+    mqtt.states["S1"].config = copy.deepcopy(CONFIG)
+    await mqtt.set_config("S1", ["outlet", "O3"], {"mOnOff": 1})
+    _, payload = client.published[0]
+    assert payload["params"] == {"keyPath": ["outlet", "O3"], "O3": {**O3, "mOnOff": 1}}
