@@ -75,9 +75,12 @@
 - ⚠️ **Login aus HA/CLI meldet die Handy-App ab** (ein Token pro Konto). Folgen:
   - Im README deutlich warnen; Empfehlung: **zweites Spider-Farmer-Konto** für HA anlegen und das Gerät damit teilen (falls die App Teilen unterstützt – prüfen)
   - Umgekehrt meldet ein neuer App-Login vermutlich HA ab → Reauth-Flow muss sauber funktionieren
-  - Noch zu prüfen: Wird nur der REST-Token ungültig, oder auch die MQTT-Verbindung?
+  - ✅ Geprüft: Neuer App-Login macht den REST-Token ungültig (`code "102"`, „The token is registered remotely.“), **MQTT läuft aber weiter** – bestehende Verbindung bleibt, und ein neuer MQTT-Login mit den alten `mqttName`/`mqttPwd` funktioniert ebenfalls
+  - Geräte teilen mit einem Zweitkonto: **von der App nicht unterstützt**
 - `getConfigFile` enthält außerdem `system` (buzzer, 24h), `alarm` (Min/Max-Grenzen je Sensor), `calibration`
-- Umluft-Config: `maxSpeed: 1`, aber `mLevel` 2–3 funktioniert → Stufenbereich noch unklar (App zeigt vermutlich 1–10)
+- Umluft: App zeigt Stärke 1–10 (`mLevel`) und Oszillation 1–10 (vermutlich `shakeLevel`, noch zu bestätigen); `natural` = Naturwind?
+- ✅ **Push bestätigt:** Das Gerät sendet ungefragt `getDevSta` alle ~6 s und `getSysSta` alle ~10 s (beobachtet über 4 Min.). Ob das dauerhaft so ist oder nur nach einer Anfrage für eine Weile, ist offen → HA fragt sicherheitshalber alle 60 s selbst nach
+- Die App fragt zusätzlich `getGGSDev` ab (Inhalt noch unbekannt, evtl. angeschlossene Zusatzgeräte) und `getDevOpLog`
 
 ## 2. Entscheidungen
 
@@ -86,11 +89,12 @@
 - **D3 – Verteilung:** Öffentliches GitHub-Repo `somesoma/spider-farmer-hass`, HACS-kompatibel (`hacs.json`, Releases, README, HACS- und hassfest-Validierung per GitHub Action).
 - **D4 – Auth:** Config Flow E-Mail → OTP; bei ungültigem Token Reauth-Flow mit neuem Code. Gespeichert werden `token`, `userId`, `mqttName`, `mqttPwd`.
 - **D5 – Entwicklung:** Windows-venv für Code + Unit-Tests; HA-Core zum End-to-End-Test in **WSL2** (HA-Core läuft unter Windows nicht offiziell). Python-Version wie die aktuelle HA-Version.
-- **D6 – Entities:** Lampe = `light` (0–100 %), Abluft = `fan` mit Prozent, Umluft = `fan` mit Stufen, Steckdosen = `switch` (Namen aus `getSocketCustomizeName`), Messwerte = `sensor`, Online = `binary_sensor`, WLAN/Firmware/Uptime = Diagnose-`sensor`.
+- **D6 – Entities:** Lampe = `light` (0–100 %), Abluft = `fan` mit Prozent, Umluft = `fan` mit 10 Stufen (`mLevel` 1–10) + `number` für Oszillation 1–10, Steckdosen = `switch` (Namen aus `getSocketCustomizeName`), Messwerte = `sensor`, Online = `binary_sensor`, WLAN/Firmware/Uptime = Diagnose-`sensor`.
 - **D7 – Schalten im Auto-Modus:** Gleiche Payload wie die App bei manueller Bedienung. Verhalten an der Hardware prüfen.
 - **D8 – Historie:** Cloud-Historie (`dr/getDeviceTHPData/v2`, 5-Min-Samples) als importierte Statistik beim Einrichten; später Lücken nach Ausfällen füllen.
 - **D9 – Code-Struktur:** Protokoll-Code eingebettet als Unterpaket `custom_components/spider_farmer/sfcloud/` **ohne HA-Imports** → unter Windows testbar, später als PyPI-Paket auslagerbar. Innerhalb von `sfcloud` nur relative Imports; Tests/CLI importieren es als Top-Level-Paket `sfcloud` (sonst würde `spider_farmer/__init__.py` HA nachladen).
 - **D10 – Transport:** Cloud-only. Lokale Steuerung (BLE/LAN) ist ein späteres, eigenes Thema.
+- **D11 – Koexistenz mit der App:** HA arbeitet im Betrieb **nur über MQTT**. REST wird nur beim Einrichten gebraucht (Login, Geräteliste, Steckdosennamen) und für den Historie-Import. Die Geräteliste wird im Config Entry gespeichert. Folge: Einmal in HA einloggen (App wird dabei abgemeldet), danach wieder in der App einloggen – HA läuft weiter. Ein ungültiger REST-Token (`102`) löst **keinen** Reauth aus, sondern nur, wenn er wirklich gebraucht wird (z. B. Historie, neue Geräte suchen); Reauth zwingend nur, wenn der MQTT-Login abgelehnt wird.
 
 ## 3. Geplante Struktur
 
@@ -171,6 +175,6 @@ spider-farmer-hass/
 ## 5. Risiken
 
 - **Light/Outlet-Payload unbestätigt:** wird in M1 an der Hardware geklärt
-- **Session-Konflikt mit der App (bestätigt):** Login in HA wirft die App raus und vermutlich umgekehrt → Zweitkonto empfehlen, Reauth robust machen
+- **Session-Konflikt mit der App (bestätigt, entschärft):** Login in HA wirft die App raus und umgekehrt; MQTT bleibt aber gültig → siehe D11. Offen: Ändert sich `mqttPwd` irgendwann (z. B. bei Passwort-/Konto-Änderung)?
 - **Inoffizielle API:** Spider Farmer kann sie jederzeit ändern (App-Version im `systemdata`-Header)
 - **Self-signed MQTT-Zertifikat:** TLS ohne Prüfung nötig, im README dokumentieren

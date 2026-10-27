@@ -7,7 +7,7 @@ from typing import Any
 
 import pytest
 
-from sfcloud import ApiError, SpiderFarmerApi, crypto
+from sfcloud import ApiError, AuthError, SpiderFarmerApi, crypto
 
 
 class FakeResponse:
@@ -107,3 +107,10 @@ async def test_history_range_is_sent_in_utc() -> None:
     payload = session.requests[0]["payload"]
     assert payload["startDate"] == "2026-10-26 23:00:00"
     assert payload["endDate"] == "2026-10-27 11:00:00"
+
+
+async def test_token_replaced_raises_auth_error() -> None:
+    session = FakeSession({"code": "102", "msg": "The token is registered remotely.", "data": None})
+    api = SpiderFarmerApi(session, "TOK")  # type: ignore[arg-type]
+    with pytest.raises(AuthError):
+        await api.get_rooms()

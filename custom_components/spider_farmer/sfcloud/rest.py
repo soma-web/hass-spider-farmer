@@ -20,8 +20,8 @@ _LOGGER = logging.getLogger(__name__)
 DEFAULT_BASE_URL = "https://api.spider-farmer.com"
 APP_VERSION = "2.5.2"
 SUCCESS_CODE = "000"
-# TODO(M1): confirm which codes the API uses for an invalid/expired token.
-AUTH_ERROR_CODES: frozenset[str] = frozenset()
+# "102": "The token is registered remotely." – another login (e.g. the app) replaced it.
+AUTH_ERROR_CODES: frozenset[str] = frozenset({"102"})
 
 _HISTORY_FMT = "%Y-%m-%d %H:%M:%S"
 
