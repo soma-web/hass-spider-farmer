@@ -172,6 +172,7 @@ spider-farmer-hass/
   - Lampe schalten/dimmen in HA setzt jetzt `modeType` 0 (wie in der App auf „Manueller“ stellen)
   - neu: Select „Lichtmodus“ (zurück zum Zeitfenster; beim Wechsel auf Manuell bleibt die Lampe im aktuellen Zustand) und Number „Licht Ziel-Helligkeit“ (`timePeriod[0].brightness`)
   - [ ] Live-Test in der Lichtphase (ab 18:00), PPFD-Wert 2 bestätigen
+  - Zeitfenster als Entitäten: Time „Licht an/aus“, Sensor „Lichtdauer“, Number „Sonnenauf-/-untergang“ (`fadeTime`, 0–30 min, Obergrenze geschätzt); Karte `examples/lighting-card.yaml`
   - [ ] Modi für Abluft/Umluft/Steckdosen (Werte noch unbekannt)
 
 ### M4 – Historie

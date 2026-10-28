@@ -13,6 +13,16 @@ from .sfcloud import DeviceState
 from .sfcloud.mqtt import config_at
 
 
+def light_schedule(state: DeviceState) -> dict[str, Any] | None:
+    """The light's time window (first `timePeriod` entry), if it has one.
+
+    `startTime`/`endTime` are seconds after midnight, `brightness` in %, `fadeTime` (sunrise
+    and sunset) in seconds.
+    """
+    periods = config_at(state.config, ["device", "light"]).get("timePeriod") or []
+    return periods[0] if periods and isinstance(periods[0], dict) else None
+
+
 class SpiderFarmerEntity(CoordinatorEntity[SpiderFarmerCoordinator]):
     """An entity belonging to one Spider Farmer device."""
 
@@ -56,3 +66,11 @@ class SpiderFarmerEntity(CoordinatorEntity[SpiderFarmerCoordinator]):
 
     async def async_set_config(self, key_path: list[str], patch: dict[str, Any]) -> None:
         await self.coordinator.async_set_config(self._serial, key_path, patch)
+
+    async def async_set_light_schedule(self, **changes: Any) -> None:
+        """Change fields of the light's time window, keeping any further periods."""
+        periods = [dict(p) for p in self.config("device", "light").get("timePeriod") or []]
+        if not periods:
+            return
+        periods[0].update(changes)
+        await self.async_set_config(["device", "light"], {"timePeriod": periods})

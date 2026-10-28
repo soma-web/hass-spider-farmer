@@ -53,6 +53,9 @@
       },
       "schedule_brightness": {
         "name": "Light target brightness"
+      },
+      "schedule_fade": {
+        "name": "Light sunrise/sunset"
       }
     },
     "select": {
@@ -92,11 +95,22 @@
       },
       "probe_soil_ec": {
         "name": "Soil EC {probe}"
+      },
+      "light_duration": {
+        "name": "Light duration"
       }
     },
     "switch": {
       "outlet": {
         "name": "Outlet {number}"
+      }
+    },
+    "time": {
+      "light_on_time": {
+        "name": "Light on"
+      },
+      "light_off_time": {
+        "name": "Light off"
       }
     }
   },

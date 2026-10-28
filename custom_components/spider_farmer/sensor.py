@@ -27,7 +27,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
 from .coordinator import SpiderFarmerConfigEntry, SpiderFarmerCoordinator
-from .entity import SpiderFarmerEntity
+from .entity import SpiderFarmerEntity, light_schedule
 from .sfcloud import DeviceState
 
 
@@ -45,6 +45,15 @@ class SpiderFarmerSensorDescription(SensorEntityDescription):
     value_fn: Callable[[DeviceState], Any]
     # Climate sensors only exist if the controller reports the value at all.
     climate_key: str | None = None
+    exists_fn: Callable[[DeviceState], bool] | None = None
+
+
+def _light_hours(state: DeviceState) -> float | None:
+    """Length of the light's time window; it may span midnight (18:00–06:00 = 12 h)."""
+    schedule = light_schedule(state)
+    if not schedule or "startTime" not in schedule or "endTime" not in schedule:
+        return None
+    return ((schedule["endTime"] - schedule["startTime"]) % 86400) / 3600
 
 
 SENSORS: tuple[SpiderFarmerSensorDescription, ...] = (
@@ -119,6 +128,15 @@ SENSORS: tuple[SpiderFarmerSensorDescription, ...] = (
         suggested_display_precision=2,
     ),
     SpiderFarmerSensorDescription(
+        key="light_duration",
+        translation_key="light_duration",
+        value_fn=_light_hours,
+        exists_fn=lambda state: light_schedule(state) is not None,
+        device_class=SensorDeviceClass.DURATION,
+        native_unit_of_measurement=UnitOfTime.HOURS,
+        suggested_display_precision=1,
+    ),
+    SpiderFarmerSensorDescription(
         key="wifi_signal",
         value_fn=lambda state: (_sys(state).get("wifi") or {}).get("rssi"),
         device_class=SensorDeviceClass.SIGNAL_STRENGTH,
@@ -153,7 +171,8 @@ async def async_setup_entry(
         entities.extend(
             SpiderFarmerSensor(coordinator, serial, description)
             for description in SENSORS
-            if description.climate_key is None or description.climate_key in reported
+            if (description.climate_key is None or description.climate_key in reported)
+            and (description.exists_fn is None or description.exists_fn(state))
         )
         # Individual soil probes; with a single probe they equal the averages above.
         probes = soil_probes(state)

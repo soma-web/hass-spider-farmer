@@ -14,7 +14,7 @@ Spider Farmer cloud – the same REST API and MQTT broker the official app uses.
 | Switches | Power strip outlets 1–5 |
 | Fans | Exhaust fan (1–100 %), circulation fan (10 levels, oscillation on/off) |
 | Number | Circulation fan oscillation level (0–10) |
-| Light | Grow light brightness |
+| Light | Grow light brightness, light mode (manual / time window / PPFD), time window: on and off time, duration, target brightness, sunrise/sunset |
 | Diagnostics | Connectivity, Wi-Fi signal, uptime |
 
 - **Push updates**: the controller reports its state every few seconds over MQTT.
@@ -50,6 +50,10 @@ by e-mail.
 - **Controls behave like manual control in the app** (`mOnOff` / `mLevel`). If a
   component runs on a schedule or cycle in the app, the controller may override
   manual changes. The raw controller mode is shown as the `mode_type` attribute.
+- **Light**: switching or dimming it puts the light into manual mode, like in the
+  app; the time window no longer runs until you set *Light mode* back to *Time window*.
+  [`examples/lighting-card.yaml`](examples/lighting-card.yaml) is a dashboard card
+  with all light settings.
 - Before every command the current configuration is read from the controller,
   so changes made in the app are not overwritten.
 - The MQTT broker uses a self-signed certificate, so certificate verification is

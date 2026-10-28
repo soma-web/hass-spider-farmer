@@ -213,3 +213,29 @@ async def test_diagnostics_are_redacted(
     assert EMAIL not in text
     assert "secret" not in text
     assert result["devices"]["device_1"]["state"]["dev"]["sensor"]["temp"] == 21.1
+
+
+async def test_light_time_window_entities(
+    hass: HomeAssistant, config_entry: MockConfigEntry, broker: list[FakeBroker]
+) -> None:
+    await _setup(hass, config_entry)
+    assert hass.states.get("time.tent_light_on").state == "18:00:00"
+    assert hass.states.get("time.tent_light_off").state == "06:00:00"
+    assert float(hass.states.get("sensor.tent_light_duration").state) == 12
+    assert hass.states.get("number.tent_light_sunrise_sunset").state == "20"
+
+    await hass.services.async_call(
+        "time", "set_value", {"entity_id": "time.tent_light_off", "time": "07:30"}, blocking=True
+    )
+    period = broker[0].commands[-1]["light"]["timePeriod"][0]
+    assert period["endTime"] == 27000
+    assert period["startTime"] == 64800
+    assert period["brightness"] == 80
+
+    await hass.services.async_call(
+        "number",
+        "set_value",
+        {"entity_id": "number.tent_light_sunrise_sunset", "value": 10},
+        blocking=True,
+    )
+    assert broker[0].commands[-1]["light"]["timePeriod"][0]["fadeTime"] == 600

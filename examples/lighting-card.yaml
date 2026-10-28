@@ -1,0 +1,53 @@
+# "Beleuchtung" card: everything about the grow light in one place.
+# Dashboard → edit → add card → "Manual", paste this. The entity IDs depend on the
+# device name in Home Assistant; replace "wohnzimmer_mygarden" with yours.
+# The time window rows only show while the light mode is "Time window".
+type: vertical-stack
+cards:
+  - type: tile
+    entity: light.wohnzimmer_mygarden_lampe
+    name: Beleuchtung
+    features_position: bottom
+    features:
+      - type: light-brightness
+  - type: entities
+    entities:
+      - entity: select.wohnzimmer_mygarden_lichtmodus
+        name: Modus
+      - entity: sensor.mygarden_ppfd
+        name: Aktueller PPFD
+      - type: conditional
+        conditions:
+          - entity: select.wohnzimmer_mygarden_lichtmodus
+            state: schedule
+        row:
+          entity: time.wohnzimmer_mygarden_licht_an
+          name: Licht an
+      - type: conditional
+        conditions:
+          - entity: select.wohnzimmer_mygarden_lichtmodus
+            state: schedule
+        row:
+          entity: time.wohnzimmer_mygarden_licht_aus
+          name: Licht aus
+      - type: conditional
+        conditions:
+          - entity: select.wohnzimmer_mygarden_lichtmodus
+            state: schedule
+        row:
+          entity: sensor.wohnzimmer_mygarden_lichtdauer
+          name: Lichtdauer
+      - type: conditional
+        conditions:
+          - entity: select.wohnzimmer_mygarden_lichtmodus
+            state: schedule
+        row:
+          entity: number.wohnzimmer_mygarden_licht_ziel_helligkeit
+          name: Ziel-Helligkeit
+      - type: conditional
+        conditions:
+          - entity: select.wohnzimmer_mygarden_lichtmodus
+            state: schedule
+        row:
+          entity: number.wohnzimmer_mygarden_licht_sonnenauf_untergang
+          name: Sonnenauf-/-untergang

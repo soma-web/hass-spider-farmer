@@ -53,6 +53,9 @@
       },
       "schedule_brightness": {
         "name": "Licht Ziel-Helligkeit"
+      },
+      "schedule_fade": {
+        "name": "Licht Sonnenauf-/-untergang"
       }
     },
     "select": {
@@ -92,11 +95,22 @@
       },
       "probe_soil_ec": {
         "name": "Boden-EC {probe}"
+      },
+      "light_duration": {
+        "name": "Lichtdauer"
       }
     },
     "switch": {
       "outlet": {
         "name": "Steckdose {number}"
+      }
+    },
+    "time": {
+      "light_on_time": {
+        "name": "Licht an"
+      },
+      "light_off_time": {
+        "name": "Licht aus"
       }
     }
   },
