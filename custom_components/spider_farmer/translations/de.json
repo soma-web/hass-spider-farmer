@@ -34,6 +34,37 @@
     }
   },
   "entity": {
+    "fan": {
+      "blower": {
+        "name": "Abluft"
+      },
+      "fan": {
+        "name": "Umluft"
+      }
+    },
+    "light": {
+      "light": {
+        "name": "Lampe"
+      }
+    },
+    "number": {
+      "oscillation": {
+        "name": "Oszillation"
+      },
+      "schedule_brightness": {
+        "name": "Licht Ziel-Helligkeit"
+      }
+    },
+    "select": {
+      "light_mode": {
+        "name": "Lichtmodus",
+        "state": {
+          "manual": "Manuell",
+          "schedule": "Zeitfenster",
+          "ppfd": "PPFD"
+        }
+      }
+    },
     "sensor": {
       "vpd": {
         "name": "VPD"
@@ -66,24 +97,6 @@
     "switch": {
       "outlet": {
         "name": "Steckdose {number}"
-      }
-    },
-    "fan": {
-      "blower": {
-        "name": "Abluft"
-      },
-      "fan": {
-        "name": "Umluft"
-      }
-    },
-    "light": {
-      "light": {
-        "name": "Lampe"
-      }
-    },
-    "number": {
-      "oscillation": {
-        "name": "Oszillation"
       }
     }
   },

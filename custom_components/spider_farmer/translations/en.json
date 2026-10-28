@@ -34,6 +34,37 @@
     }
   },
   "entity": {
+    "fan": {
+      "blower": {
+        "name": "Exhaust fan"
+      },
+      "fan": {
+        "name": "Circulation fan"
+      }
+    },
+    "light": {
+      "light": {
+        "name": "Light"
+      }
+    },
+    "number": {
+      "oscillation": {
+        "name": "Oscillation"
+      },
+      "schedule_brightness": {
+        "name": "Light target brightness"
+      }
+    },
+    "select": {
+      "light_mode": {
+        "name": "Light mode",
+        "state": {
+          "manual": "Manual",
+          "schedule": "Time window",
+          "ppfd": "PPFD"
+        }
+      }
+    },
     "sensor": {
       "vpd": {
         "name": "VPD"
@@ -66,24 +97,6 @@
     "switch": {
       "outlet": {
         "name": "Outlet {number}"
-      }
-    },
-    "fan": {
-      "blower": {
-        "name": "Exhaust fan"
-      },
-      "fan": {
-        "name": "Circulation fan"
-      }
-    },
-    "light": {
-      "light": {
-        "name": "Light"
-      }
-    },
-    "number": {
-      "oscillation": {
-        "name": "Oscillation"
       }
     }
   },

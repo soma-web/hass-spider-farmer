@@ -9,6 +9,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 from homeassistant.util.color import brightness_to_value, value_to_brightness
 
+from .const import MODE_MANUAL
 from .coordinator import SpiderFarmerConfigEntry, SpiderFarmerCoordinator
 from .entity import SpiderFarmerEntity
 
@@ -29,7 +30,12 @@ async def async_setup_entry(
 
 
 class SpiderFarmerLight(SpiderFarmerEntity, LightEntity):
-    """Light on the controller's light port. Controls the manual level (`mOnOff`/`mLevel`)."""
+    """Light on the controller's light port.
+
+    Switching or dimming puts the light into manual mode (`modeType` 0), like changing it
+    in the app does; otherwise the schedule or PPFD mode would ignore the command.
+    The light mode select switches back to the schedule.
+    """
 
     _attr_translation_key = "light"
     _attr_color_mode = ColorMode.BRIGHTNESS
@@ -57,7 +63,7 @@ class SpiderFarmerLight(SpiderFarmerEntity, LightEntity):
         return {"mode_type": self.config("device", "light").get("modeType")}
 
     async def async_turn_on(self, **kwargs: Any) -> None:
-        patch: dict[str, Any] = {"mOnOff": 1}
+        patch: dict[str, Any] = {"modeType": MODE_MANUAL, "mOnOff": 1}
         if ATTR_BRIGHTNESS in kwargs:
             patch["mLevel"] = max(
                 1, round(brightness_to_value(LEVEL_RANGE, kwargs[ATTR_BRIGHTNESS]))
@@ -67,4 +73,4 @@ class SpiderFarmerLight(SpiderFarmerEntity, LightEntity):
         await self.async_set_config(["device", "light"], patch)
 
     async def async_turn_off(self, **kwargs: Any) -> None:
-        await self.async_set_config(["device", "light"], {"mOnOff": 0})
+        await self.async_set_config(["device", "light"], {"modeType": MODE_MANUAL, "mOnOff": 0})

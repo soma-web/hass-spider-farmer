@@ -28,7 +28,8 @@ from typing import Any
 
 import aiohttp
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "custom_components" / "spider_farmer"))
+# Appended, not prepended: the integration's select.py must not shadow the stdlib module.
+sys.path.append(str(Path(__file__).resolve().parents[1] / "custom_components" / "spider_farmer"))
 
 from sfcloud import AuthError, Device, SpiderFarmerApi, SpiderFarmerMqtt
 

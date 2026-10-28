@@ -64,7 +64,22 @@ CONFIG_FILE = {
             "O3": {"modeType": 0, "tempAdd": 1, "humiAdd": 1, "mOnOff": 0},
         },
         "device": {
-            "light": {"modeType": 1, "mOnOff": 1, "mLevel": 16},
+            "light": {
+                "modeType": 1,
+                "lastAutoModeType": 1,
+                "timePeriod": [
+                    {
+                        "enabled": 1,
+                        "weekmask": 127,
+                        "startTime": 64800,
+                        "endTime": 21600,
+                        "brightness": 80,
+                        "fadeTime": 1200,
+                    }
+                ],
+                "mOnOff": 1,
+                "mLevel": 16,
+            },
             "fan": {"modeType": 0, "shakeLevel": 0, "natural": 0, "mOnOff": 1, "mLevel": 2},
             "blower": {"modeType": 0, "maxSpeed": 36, "mOnOff": 1, "mLevel": 37},
         },

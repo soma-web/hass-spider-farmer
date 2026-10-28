@@ -9,7 +9,7 @@ from pathlib import Path
 def test_sfcloud_imports_without_homeassistant() -> None:
     # Fresh interpreter: the HA pytest plugin may already have imported homeassistant here.
     code = (
-        "import sys; sys.path.insert(0, 'custom_components/spider_farmer'); "
+        "import sys; sys.path.append('custom_components/spider_farmer'); "
         "import sfcloud; assert 'homeassistant' not in sys.modules"
     )
     subprocess.run([sys.executable, "-c", code], check=True)

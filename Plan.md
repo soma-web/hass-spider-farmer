@@ -168,7 +168,11 @@ spider-farmer-hass/
 - [x] Oszillation: `shakeLevel` wird übernommen (Hardware-Test, `getConfigFile` zeigt 3); ob die Umluft dann pendelt, bestätigt der Nutzer noch – danach zurück auf 0
 - [ ] Praxistest in der HA-Oberfläche: Steckdose 3, Umluft-Stufe, Oszillation
 - [ ] Lampe in der Lichtphase testen (Nutzer möchte sie in der Dunkelphase nicht schalten)
-- [ ] Offen: Verhalten bei Zeitplan-/Zyklus-Modus (`modeType` ≠ 0) – überschreibt der Controller manuelle Befehle?
+- [x] Zeitplan-Modus (2026-10-28): im Modus ≠ 0 ignoriert der Controller `mOnOff`/`mLevel` (Lampe im „Zeitfenstermodus“ reagierte nicht). Lampe: `modeType` 0 Manuell, 1 Zeitfenster (`timePeriod[]` mit `startTime`/`endTime` in s ab 0:00, `brightness`, `fadeTime`), 2 PPFD (Wert noch unbestätigt); `lastAutoModeType` merkt den letzten Automodus.
+  - Lampe schalten/dimmen in HA setzt jetzt `modeType` 0 (wie in der App auf „Manueller“ stellen)
+  - neu: Select „Lichtmodus“ (zurück zum Zeitfenster; beim Wechsel auf Manuell bleibt die Lampe im aktuellen Zustand) und Number „Licht Ziel-Helligkeit“ (`timePeriod[0].brightness`)
+  - [ ] Live-Test in der Lichtphase (ab 18:00), PPFD-Wert 2 bestätigen
+  - [ ] Modi für Abluft/Umluft/Steckdosen (Werte noch unbekannt)
 
 ### M4 – Historie
 - [x] Import `getDeviceTHPData` (bis 30 Tage, tageweise, stoppt beim ersten leeren Tag) → stündlich Mittel/Min/Max als importierte Statistik für die Stunden vor der Einrichtung

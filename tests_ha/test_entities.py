@@ -99,8 +99,62 @@ async def test_blower_and_light_commands(
         blocking=True,
     )
     light = broker[0].commands[-1]["light"]
+    assert light["modeType"] == 0
     assert light["mOnOff"] == 1
     assert light["mLevel"] == 50
+    assert light["timePeriod"][0]["brightness"] == 80
+
+    await hass.services.async_call(
+        "light", "turn_off", {"entity_id": "light.tent_light"}, blocking=True
+    )
+    light = broker[0].commands[-1]["light"]
+    assert light["modeType"] == 0
+    assert light["mOnOff"] == 0
+
+
+async def test_light_mode_select(
+    hass: HomeAssistant, config_entry: MockConfigEntry, broker: list[FakeBroker]
+) -> None:
+    await _setup(hass, config_entry)
+    assert hass.states.get("select.tent_light_mode").state == "schedule"
+
+    # Light is off (dark phase): switching to manual must not turn it on.
+    await hass.services.async_call(
+        "select",
+        "select_option",
+        {"entity_id": "select.tent_light_mode", "option": "manual"},
+        blocking=True,
+    )
+    light = broker[0].commands[-1]["light"]
+    assert light["modeType"] == 0
+    assert light["mOnOff"] == 0
+    assert light["mLevel"] == 16
+
+    await hass.services.async_call(
+        "select",
+        "select_option",
+        {"entity_id": "select.tent_light_mode", "option": "schedule"},
+        blocking=True,
+    )
+    light = broker[0].commands[-1]["light"]
+    assert light["modeType"] == 1
+    assert light["lastAutoModeType"] == 1
+
+
+async def test_schedule_brightness_number(
+    hass: HomeAssistant, config_entry: MockConfigEntry, broker: list[FakeBroker]
+) -> None:
+    await _setup(hass, config_entry)
+    entity_id = "number.tent_light_target_brightness"
+    assert hass.states.get(entity_id).state == "80"
+
+    await hass.services.async_call(
+        "number", "set_value", {"entity_id": entity_id, "value": 65}, blocking=True
+    )
+    light = broker[0].commands[-1]["light"]
+    assert light["modeType"] == 1
+    assert light["timePeriod"][0]["brightness"] == 65
+    assert light["timePeriod"][0]["startTime"] == 64800
 
 
 async def test_oscillation_number(

@@ -22,3 +22,7 @@ COMMAND_TIMEOUT_SECONDS = 10
 CONFIG_REFRESH_SECONDS = 300
 # How many days of cloud history to import at setup (stops earlier if the cloud has less).
 HISTORY_DAYS = 30
+
+# device.light.modeType values, as named in the app
+MODE_MANUAL = 0
+LIGHT_MODES = {0: "manual", 1: "schedule", 2: "ppfd"}
