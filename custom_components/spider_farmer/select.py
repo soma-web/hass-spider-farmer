@@ -5,7 +5,6 @@ from __future__ import annotations
 from typing import Any
 
 from homeassistant.components.select import SelectEntity
-from homeassistant.const import EntityCategory
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
@@ -30,8 +29,9 @@ async def async_setup_entry(
 
 
 class SpiderFarmerLightMode(SpiderFarmerEntity, SelectEntity):
+    # Not a config entity: it is the everyday way back to the schedule, so it belongs
+    # on the dashboard next to the light.
     _attr_translation_key = "light_mode"
-    _attr_entity_category = EntityCategory.CONFIG
     _attr_options = list(LIGHT_MODES.values())
 
     def __init__(self, coordinator: SpiderFarmerCoordinator, serial: str) -> None:
