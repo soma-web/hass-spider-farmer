@@ -5,13 +5,13 @@
     "recorder"
   ],
   "codeowners": [
-    "@somesoma"
+    "@soma-web"
   ],
   "config_flow": true,
-  "documentation": "https://github.com/somesoma/spider-farmer-hass",
+  "documentation": "https://github.com/soma-web/hass-spider-farmer",
   "integration_type": "hub",
   "iot_class": "cloud_push",
-  "issue_tracker": "https://github.com/somesoma/spider-farmer-hass/issues",
+  "issue_tracker": "https://github.com/soma-web/hass-spider-farmer/issues",
   "loggers": [
     "custom_components.spider_farmer"
   ],

@@ -1,5 +1,7 @@
 # Spider Farmer for Home Assistant
 
+<img src="https://raw.githubusercontent.com/soma-web/hass-spider-farmer/main/custom_components/spider_farmer/brand/icon.png" alt="Spider Farmer integration icon" width="128" align="right">
+
 Unofficial Home Assistant integration for Spider Farmer grow controllers
 (tested with the GGS controller **SF-GGS-PS5**, firmware 3.14). It talks to the
 Spider Farmer cloud – the same REST API and MQTT broker the official app uses.
@@ -23,11 +25,20 @@ Spider Farmer cloud – the same REST API and MQTT broker the official app uses.
 
 ## Installation
 
-### HACS (recommended)
+### Marketplace (Home Assistant 2026.11 and later, recommended)
+
+1. *Settings → Marketplace* → **Add from link** (top right) → enter
+   `https://github.com/soma-web/hass-spider-farmer` and select **Add**
+   (choose *Integration* as type if asked). Adding a link requires connecting
+   the Marketplace to GitHub once.
+2. Open **Spider Farmer** → **Install**. No restart is needed; the setup opens
+   right away.
+
+### HACS (Home Assistant 2026.10)
 
 1. HACS → ⋮ → *Custom repositories* → add
    `https://github.com/soma-web/hass-spider-farmer` as *Integration*.
-2. Install **Spider Farmer** and restart Home Assistant.
+2. Download **Spider Farmer** and restart Home Assistant.
 
 ### Manual
 

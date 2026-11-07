@@ -2,7 +2,7 @@
 
 > Lebendes Dokument. Stand: 2026-10-27
 > Quelle der Protokoll-Infos: `reverse-spider-farmer/` (03-api-reference.md, 04-mqtt-control.md, client/)
-> Repo: https://github.com/somesoma/spider-farmer-hass · Domain: `spider_farmer`
+> Repo: https://github.com/soma-web/hass-spider-farmer · Domain: `spider_farmer`
 
 ## Status
 
