@@ -52,15 +52,15 @@ Copy `custom_components/spider_farmer` into your Home Assistant
 
 *Settings → Devices & services → Add integration → Spider Farmer*, enter the
 e-mail address of your Spider Farmer account and then the login code you receive
-by e-mail.
-
-> **Logging in signs you out of the Spider Farmer app.** The cloud allows one
-> app session per account. Simply log in to the app again afterwards –
-> Home Assistant keeps working, because it only needs the MQTT connection after
-> setup. (Only the history import at setup needs the fresh login.)
+by e-mail. This signs you out of the phone app once – see below.
 
 ## Good to know
 
+- **You are signed out of the Spider Farmer phone app once.** The cloud allows
+  only one app session per account, so the login during setup ends the session
+  on your phone. Simply log in to the app again afterwards – the integration
+  keeps working, because after setup it only needs the MQTT connection, which
+  is not affected. (Only the history import at setup needs the fresh login.)
 - **Controls behave like manual control in the app** (`mOnOff` / `mLevel`). If a
   component runs on a schedule or cycle in the app, the controller may override
   manual changes. The raw controller mode is shown as the `mode_type` attribute.
