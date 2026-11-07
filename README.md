@@ -110,3 +110,7 @@ uv pip install --python ~/ha-test/bin/python pytest-homeassistant-custom-compone
 bash scripts/ha-dev.sh
 ```
 
+
+## License
+
+[MIT](LICENSE) © soma-web

@@ -16,7 +16,7 @@
 - [x] M2 – Lesen in HA, End-to-End getestet, Koexistenz mit App bestätigt
 - [x] M3 – Steuerung (Code + HA-Tests; Praxistest in der HA-Oberfläche offen)
 - [x] M4 – Historie-Import (Code + Tests; Live-Import passiert beim nächsten HA-Login)
-- [ ] **M5 – Release:** Code fertig; offen: Push, Lizenz wählen, Release v0.1.0
+- [ ] **M5 – Release:** Code fertig, gepusht, Lizenz MIT; offen: Release v0.1.0
 
 ---
 
@@ -186,8 +186,8 @@ spider-farmer-hass/
 - [x] README (Features, HACS-Installation, Einrichtung, Warnung App-Abmeldung, Ko-fi, Entwicklung)
 - [x] GitHub Actions: hassfest, HACS-Validierung, ruff, pytest (Library + HA-Tests, Python 3.14)
 - [x] Repo auf persönliche Daten geprüft (Seriennummer, User-ID, E-Mail) – sauber, auch in der Historie
-- [ ] Push auf `somesoma/spider-farmer-hass` (Repo existiert, Stand dort: M1), CI grün
-- [ ] Lizenz festlegen (`LICENSE`)
+- [x] Push auf `soma-web/hass-spider-farmer`
+- [x] Lizenz: MIT (`LICENSE`, Copyright soma-web)
 - [ ] Release v0.1.0
 
 ### Später
