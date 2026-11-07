@@ -26,7 +26,7 @@ Spider Farmer cloud – the same REST API and MQTT broker the official app uses.
 ### HACS (recommended)
 
 1. HACS → ⋮ → *Custom repositories* → add
-   `[https://github.com/somesoma/spider-farmer-hass](https://github.com/soma-web/hass-spider-farmer)` as *Integration*.
+   `https://github.com/soma-web/hass-spider-farmer` as *Integration*.
 2. Install **Spider Farmer** and restart Home Assistant.
 
 ### Manual
