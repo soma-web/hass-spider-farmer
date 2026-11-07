@@ -16,7 +16,7 @@
 - [x] M2 – Lesen in HA, End-to-End getestet, Koexistenz mit App bestätigt
 - [x] M3 – Steuerung (Code + HA-Tests; Praxistest in der HA-Oberfläche offen)
 - [x] M4 – Historie-Import (Code + Tests; Live-Import passiert beim nächsten HA-Login)
-- [ ] **M5 – Release:** Code fertig, gepusht, Lizenz MIT; offen: Release v0.1.0
+- [x] **M5 – Release:** v0.1.0 veröffentlicht (2026-11-07)
 
 ---
 
@@ -188,7 +188,7 @@ spider-farmer-hass/
 - [x] Repo auf persönliche Daten geprüft (Seriennummer, User-ID, E-Mail) – sauber, auch in der Historie
 - [x] Push auf `soma-web/hass-spider-farmer`
 - [x] Lizenz: MIT (`LICENSE`, Copyright soma-web)
-- [ ] Release v0.1.0
+- [x] Release v0.1.0 (2026-11-07)
 
 ### Später
 - Modi (Zeitplan/Zyklus/Auto) als `select`/`number`

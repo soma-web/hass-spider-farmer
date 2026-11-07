@@ -1,6 +1,6 @@
 [project]
 name = "spider-farmer-hass"
-version = "0.0.1"
+version = "0.1.0"
 description = "Home Assistant integration for Spider Farmer grow controllers (cloud REST + MQTT)"
 requires-python = ">=3.13"
 license = "MIT"
