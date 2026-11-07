@@ -19,6 +19,9 @@ Spider Farmer cloud – the same REST API and MQTT broker the official app uses.
 | Light | Grow light brightness, light mode (manual / time window / PPFD), time window: on and off time, duration, target brightness, sunrise/sunset |
 | Diagnostics | Connectivity, Wi-Fi signal, uptime |
 
+- **No Bluetooth bridge needed**: no ESP32 or Bluetooth proxy near the
+  controller – Home Assistant connects to the Spider Farmer cloud directly, so
+  it works wherever your controller is online.
 - **Push updates**: the controller reports its state every few seconds over MQTT.
 - **History import**: on first setup, up to 30 days of cloud sensor history are
   imported into Home Assistant's long-term statistics.
