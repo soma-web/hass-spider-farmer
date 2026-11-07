@@ -27,3 +27,6 @@ config/
 *.swp
 .DS_Store
 Thumbs.db
+
+# Local planning notes (not published)
+Plan.md
